@@ -28,6 +28,7 @@ Currently, running `terraform apply` will create the following resources in your
   Edit this file with appropriate values. Alternatively you may override any of
   these variables by settging environment variables prior to `terraform`
   execution, like so:
+
   `TF_<VARIABLE_NAME>="value"`
 - Run `terraform apply` and inspect the proposed changes to your
   infrastructure.
