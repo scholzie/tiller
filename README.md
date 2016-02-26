@@ -30,6 +30,27 @@ Currently, running `terraform apply` will create the following resources in your
   execution, like so:
 
   `TF_<VARIABLE_NAME>="value"`
+- The following variables have no useful defaults and must be set:
+-- `access_key`: AWS Access Key ID
+-- `secret_key`: AWS Secret Access Key
+-- `cluster_name`: Name you want to apply to the new cluster
+-- `iam_instance_profile`: Role with policy mentioned above
+- In addition the previous variables, it's probably a really good idea to
+  double check the following are set properly:
+-- `environment_name`: By standards, we want this to be one of: `dev`,
+   `staging`, or `prod`
 - Run `terraform apply` and inspect the proposed changes to your
   infrastructure.
 - Run `terraform apply` to apply the changes.
+
+
+### TODO:
+- [ ] Implement a Secret Bucket for secret data which vault can't handle
+-- [ ] Chef can use configurations stored here to ensure all nodes join
+       Consul/logging services
+-- [ ] Manage tfstate in S3
+- [X] Build wrapper script to run terraform
+-- [ ] Download .tfstate from S3 for specified application
+-- [X] Set environment (dev, staging, prod)
+-- [X] Run terraform
+-- [ ] Upload resulting .tfstate file back up to bucket.

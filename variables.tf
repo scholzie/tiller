@@ -20,6 +20,7 @@ variable "inbound_ssh_cidrs" {
 }
 
 variable "key_name" {
+    default = "ecs-default"
     description = "SSH key name in your AWS account for AWS instances."
 }
 
@@ -29,12 +30,8 @@ variable "region" {
 }
 
 variable "azs" {
+    deafult = "us-east-1a"
     description = "Comma separated list of EC2 availability zones to launch instances, must be within region"
-}
-
-variable "subnet_ids" {
-    default = ""
-    description = "Comma separated list of subnet ids, must match availability zones"
 }
 
 variable "security_group_ids" {

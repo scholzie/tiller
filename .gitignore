@@ -1,0 +1,5 @@
+secure/*
+.envrc
+*.tfstate
+*.tfstate.backup
+*.tfvars
