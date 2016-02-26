@@ -24,6 +24,7 @@ Currently, running `terraform apply` will create the following resources in your
 
 ## Directions
 - `cp terraform.tfvars.example terraform.tfvars`
+
   Edit this file with appropriate values. Alternatively you may override any of
   these variables by settging environment variables prior to `terraform`
   execution, like so:
