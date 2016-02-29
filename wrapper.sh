@@ -9,7 +9,7 @@
 # Author: Chris Scholz <scholzie@blueapron.com> // Don't blame plz
 
 TFVARS="terraform.tfvars"
-BUILD_OPTIONS=(global wms demo basic)
+BUILD_OPTIONS=(global wms demo standard)
 HELP=("help" "-h" "--help" "-?")
 
 function help {
