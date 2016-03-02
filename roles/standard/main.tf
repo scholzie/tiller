@@ -164,7 +164,7 @@ resource "aws_autoscaling_group" "ecs-cluster" {
 		propagate_at_launch = true
 	}
 
-	lifecycle { create_before_destroy = true }
+#	lifecycle { create_before_destroy = true }
 }
 
 resource "aws_launch_configuration" "ecs" {
@@ -184,5 +184,5 @@ EOL
 	enable_monitoring = true
 
 
-	lifecycle { create_before_destroy = true }
+#	lifecycle { create_before_destroy = true }
 }

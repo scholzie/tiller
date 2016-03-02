@@ -1,22 +1,29 @@
 #! /usr/bin/env bash
 # Description: 
 #   This script is a wrapper for Terraform, ostensibly to manage tfstate, but
-#   mostly just to make your life more difficult. Much of it was ripped from 
-#   the Mozilla Socorro project here:
-#       https://github.com/mozilla/socorro-infra
+#   mostly just to make your life more difficult.
 #
 # Maintainer: DevOps Kr3w <devops@blueapron.com>
 # Author: Chris Scholz <scholzie@blueapron.com> // Don't blame plz
 
-TFVARS="terraform.tfvars"
-BUILD_OPTIONS=(global wms demo standard)
+ROLES=()
+pushd roles > /dev/null
+for f in *; do
+    if [[ -d "$f" ]]; then
+        ROLES+=("$f")
+    fi
+done 
+popd > /dev/null
+[[ $DEBUG ]] && echo "DEBUG: Valid ROLES: ${ROLES[@]}"
+
+#ROLES=(global wms demo standard)
 HELP=("help" "-h" "--help" "-?")
 
 function help {
     echo "USAGE: ${0} <action> <environment> <build option>"
     echo -n "Valid build options are: "
     local opt 
-    for opt in "${BUILD_OPTIONS[@]}"; do
+    for opt in "${ROLES[@]}"; do
         echo -n "$opt"
     done; echo ""
     exit 1
@@ -34,11 +41,6 @@ function check_element_exists() {
     return 1
 }
 
-if which terraform > /dev/null; then 
-    echo "terrraform not found in \$PATH"
-    echo ""
-    help
-fi
 
 # Check for help request, lack of arguments, and valid arguments
 check_element_exists "$1" "${HELP[@]}"
@@ -48,18 +50,25 @@ fi
 if [[ "$#" != "3" ]]; then
     help
 fi
-check_element_exists "$3" "${BUILD_OPTIONS[@]}"
+check_element_exists "$3" "${ROLES[@]}"
 if [ $? -ne 0 ]; then
-    echo "${3} is not a valid role."
+    echo "${3} is not a valid build option."
     help
 fi
 
 # Check for presence of Terraform
-if which terraform > /dev/null; then # Will only produce output on STDERR
-    echo "Terraform not found in \$PATH. Please verify installation."
-    exit 1
-fi
+#if which terraform > /dev/null; then # Will only produce output on STDERR
+#    echo "Terraform not found in \$PATH. Please verify installation."
+#    exit 1
+#fi
 
+ACTION="$1"
+ENVIRONMENT="$2"
+ROLE="$3"
+
+TF_REMOTE_STATE_KEY="${USER}_${ROLE}_${ENVIRONMENT}"
+
+TFVARS="roles/${ROLE}/terraform.tfvars"
 # Get the bucket name from the TFVARs file
 BUCKET=$(grep secret_bucket $TFVARS 2>/dev/null)
 if [[ "$?" != "0" ]]; then 
@@ -68,30 +77,34 @@ if [[ "$?" != "0" ]]; then
 else
     BUCKET=$(echo "$BUCKET" | awk -F\" '{print $2}')
 fi
-
-ACTION="$1"
-ENVIRONMENT="$2"
-BUILD_OPT="$3"
+STATE_DIR=$(grep tf_state_bucket_prefix $TFVARS 2>/dev/null)
+if [[ "$?" == 0 ]]; then
+    TF_REMOTE_STATE_KEY="${TF_REMOTE_STATE_KEY}/$(echo "$STATE_DIR" | awk -F\" '{print $2}')"
+fi
+[[ $DEBUG ]] && echo "DEBUG: Storing remote state in ${BUCKET}:${TF_REMOTE_STATE_KEY}..."
 
 # Fail on errors and be verbose
 set -ex
-# change to $BUILD_OPT directory
-pushd "$BUILD_OPT"
+# change to $ROLE directory
+pushd "roles/$ROLE" > /dev/null
 
-# TODO: Grab tfstate here
-aws s3 sync --exclude="*" --include="terraform.tfstate" "s3://${BUCKET}/tfstate/${ENVIRONMENT}/${BUILD_OPT}/" ./
+# Set terraform remote config:
+terraform remote config -backend="S3" -backend-config="bucket=${BUCKET}" -backend-config="key=${TF_REMOTE_STATE_KEY}"
+
+# Get remote config from S3
+#aws s3 sync --exclude="*" --include="terraform.tfstate" "s3://${BUCKET}/tfstate/${ENVIRONMENT}/${ROLE}/" ./
 
 # Run Terraform, but don't fail if TF fails.
 set +e
 terraform $ACTION -var "environment_name=${ENVIRONMENT}"
-EXIT_CODE=$?
+TF_EXIT_CODE=$?
 # Fail on errors again.
 set -e
 
 # Upload tfstate here
-aws s3 sync --exclude="*" --include="terraform.tfstate" ./ "s3://${BUCKET}/tfstate/${ENVIRONMENT}/${BUILD_OPT}/" 
+#aws s3 sync --exclude="*" --include="terraform.tfstate" ./ "s3://${BUCKET}/tfstate/${ENVIRONMENT}/${ROLE}/" 
 
 # GTFO
-popd
+popd > /dev/null
 
-exit $EXIT_CODE
+exit $TF_EXIT_CODE
