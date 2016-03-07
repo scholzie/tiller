@@ -39,21 +39,7 @@
 		    "server_url"			: "https://api.chef.io/organizations/blueapron",
 		    "validation_client_name": "blueapron-validator",
             "run_list"              : ["ba_base", "datadog"],
-            "chef_environment"      : "ba-packer-base",
-            "json"                  : {
-                "ba": {
-                    "logstash": {
-                        "host": "ec2-52-32-51-234.us-west-2.compute.amazonaws.com:5044",
-                        "ca_location": "/etc/logstash-forwarder.crt",
-                        "aws": {
-                            "key": "logstash-forwarder.crt",
-                            "bucket": "infrastructure.blueapron.com",
-                            "access_key": "AKIAIA6P6TWH7PVEFVLQ",
-                            "secret_access_key": "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"
-                        }
-                    }
-                }
-            }
+            "chef_environment"      : "ba-packer-base"
 		}
 	]
 }

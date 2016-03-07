@@ -1,12 +1,12 @@
 #
-# Cookbook Name:: ba_base-0.1.0
+# Cookbook Name:: ba_base
 # Spec:: default
 #
 # Copyright (c) 2016 The Authors, All Rights Reserved.
 
 require 'spec_helper'
 
-describe 'ba_base-0.1.0::chef-client' do
+describe 'ba_base::chef-client' do
   context 'When all attributes are default, on an unspecified platform' do
     let(:chef_run) do
       runner = ChefSpec::ServerRunner.new

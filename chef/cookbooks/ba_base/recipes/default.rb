@@ -11,6 +11,7 @@ include_recipe 'openssh'
 include_recipe 'users::sysadmins'
 include_recipe 'sudo'
 include_recipe 'ba_base::filebeat_client'
+include_recipe 'ba_base::chef-client'
 
 if node[:etc][:passwd][:vagrant] and not %w(production staging).include? node.chef_environment
   Chef::Log.warn("Patching vagrant user to be in sysadmin group")

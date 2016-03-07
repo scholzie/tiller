@@ -3,3 +3,4 @@ secure/*
 *.tfstate
 *.tfstate.backup
 *.tfvars
+.chef/

@@ -1,8 +1,10 @@
 #
-# Cookbook Name:: ba_base-0.1.0
+# Cookbook Name:: ba_base
 # Recipe:: chef-client
+# Description:
+#   Sets up necessary components for chef to register a client node
 #
-# Copyright (c) 2016 The Authors, All Rights Reserved.
+# Copyright (c) 2016 Blue Apron, Inc. 
 
 template '/etc/chef/client.rb' do
     source 'client.rb.erb'
