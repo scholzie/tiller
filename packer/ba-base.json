@@ -2,6 +2,8 @@
 	"variables": {
 		"aws_access_key": "{{env `PACKER_AWS_ACCESS_KEY_ID`}}",
 		"aws_secret_key": "{{env `PACKER_SECRET_ACCESS_KEY`}}",
+        "bucket_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
+        "bucket_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
 		"vpc_id"		: "{{env `PACKER_VPC_ID`}}",
 		"subnet_id"		: "{{env `PACKER_SUBNET_ID`}}",
 		"s3_bucket"		: "{{env `PACKER_S3_BUCKET`}}",
@@ -9,7 +11,7 @@
 		"source_ami"	: "ami-fce3c696"
 	},
 	"builders": [{
-		"type"							: "amazon-ebs",
+        "type"							: "amazon-ebs",
 	    "access_key"					: "{{user `aws_access_key`}}",
 	    "secret_key"					: "{{user `aws_secret_key`}}",
 	    "region"						: "{{user `aws_region`}}",
@@ -18,27 +20,40 @@
 	    "instance_type"					: "m3.medium",
 	    "ssh_username"					: "ubuntu",
 	    "ami_name"						: "ba-base_ubuntu14.04__{{timestamp}}",
-	    // May not even need this to make a base image. I switched instance_type to m3, which can run in ec2-classic
-	    //"subnet_id": "{{user `subnet_id`}}",
-	    //"vpc_id": "{{user `vpc_id`}}"
+        "vpc_id"                        : "{{user `vpc_id`}}",
+        "subnet_id"                     : "{{user `subnet_id`}}"
 	}],
 	"provisioners": [
 		{
-			"type"				:"shell",
+			"type"				: "shell",
 			"script"			: "provision.sh",
 			"environment_vars"	: [
-				"AWS_ACCESS_KEY_ID={{user `aws_access_key`}}",
-				"AWS_SECRET_ACCESS_KEY={{user `aws_secret_key`}}",
+				"AWS_ACCESS_KEY_ID={{user `bucket_access_key`}}",
+				"AWS_SECRET_ACCESS_KEY={{user `bucket_secret_key`}}",
 				"AWS_REGION={{user `aws_region`}}",
 				"SECRET_BUCKET={{user `s3_bucket`}}"
-			],
-			"execute_command"	: "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'"
+			]
 		},
   		{
 		    "type"					: "chef-client",
 		    "server_url"			: "https://api.chef.io/organizations/blueapron",
 		    "validation_client_name": "blueapron-validator",
-		    "chef_environment"		: "ba-packer-base",
+            "run_list"              : ["ba_base", "datadog"],
+            "chef_environment"      : "ba-packer-base",
+            "json"                  : {
+                "ba": {
+                    "logstash": {
+                        "host": "ec2-52-32-51-234.us-west-2.compute.amazonaws.com:5044",
+                        "ca_location": "/etc/logstash-forwarder.crt",
+                        "aws": {
+                            "key": "logstash-forwarder.crt",
+                            "bucket": "infrastructure.blueapron.com",
+                            "access_key": "AKIAIA6P6TWH7PVEFVLQ",
+                            "secret_access_key": "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"
+                        }
+                    }
+                }
+            }
 		}
 	]
 }
