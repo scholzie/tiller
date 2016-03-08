@@ -127,17 +127,25 @@ resource "aws_security_group" "ecs_instance_sg" {
 
 # Create an ELB for the ASG
 resource "aws_elb" "ecs" {
+    name = "elb-${var.environment_name}-ecs"
 	subnets = ["${aws_subnet.ecs.*.id}"]
 	security_groups = ["${aws_security_group.ecs-elb.id}"]
 
+    # TODO: Make this actually work with the app
 	listener {
 		instance_port = 80
 		instance_protocol = "http"
 		lb_port = 80
 		lb_protocol = "http"
 	}
-
-	lifecycle { create_before_destroy = true }
+    security_groups = [
+        "${aws_security_group.ecs-elb.id"
+    ]
+    tags {
+        Environment = "${var.environment_name}"
+        role = "standard"
+        project = "devops"
+    }
 }
 
 resource "aws_autoscaling_group" "ecs-cluster" {
@@ -151,9 +159,9 @@ resource "aws_autoscaling_group" "ecs-cluster" {
 	health_check_type = "EC2"
 	launch_configuration = "${aws_launch_configuration.ecs.name}"
 	health_check_grace_period = "${var.health_check_grace_period}"
-	#load_balancers = ["${aws_elb.ecs-elb.name}"]
+	load_balancers = ["elb-${var.environment_name}-ecs"]
 	tag {
-		key = "Env"
+		key = "Environment"
 		value = "${var.environment_name}"
 		propagate_at_launch = true
 	}
