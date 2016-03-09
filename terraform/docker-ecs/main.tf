@@ -15,6 +15,7 @@ resource "aws_ecs_cluster" "docker" {
 resource "aws_security_group" "elb-docker-sg" {
 	name = "elb-${var.environment_name}-docker-ecs-sg"
 	description = "ELB security for docker cluster"
+	vpc_id = "${var.vpc_id}"
 	# TODO: Investigate what we'll need for this
 	ingress {
 	    protocol   	= "tcp"
@@ -39,6 +40,7 @@ resource "aws_security_group" "elb-docker-sg" {
 resource "aws_security_group" "ec2-docker-sg" {
 	name = "ec2-{var.environment_name}-docker-ecs-sg"
 	description = "EC2 security for docker cluster"
+	vpc_id = "${var.vpc_id}"
 	# SSH Inbound
 	ingress {
 	    protocol   	= "tcp"
@@ -98,21 +100,21 @@ resource "aws_elb" "elb-docker-ecs" {
 }
 
 # Launch Config
-resource "aws_launch_configuration" "lc-docker-ecs" {
+resource "aws_launch_configuration" "lc-docker" {
 	name = "lc-${var.environment_name}-docker-ecs"
 	image_id = "${var.ami}"
 	instance_type = "${var.instance_type}"
 	iam_instance_profile = "${var.iam_instance_profile}"
 	key_name = "${var.key_name}"
-	security_groups = ["${aws_security_group.ec2-docker-sg}"]
+	security_groups = ["${aws_security_group.ec2-docker-sg.id}"]
 	user_data = <<EOL
 #! /bin/bash
 echo ECS_CLUSTER=${var.cluster_name} >> /etc/ecs/ecs.config
 echo ECS_ENGINE_AUTH_TYPE=dockercfg >> /etc/ecs/ecs.config
 # echo ECS_ENGINE_AUTH_DATA='{\"${var.registry_url}\":{\"auth\":\"${var.registry_auth}\",\"email\":\"${var.registry_email}\"}}' >> /etc/ecs/ecs.config
 EOL
+
 	enable_monitoring = true
-	lifecycle { create_before_destroy = true }
 }
 
 # ASG

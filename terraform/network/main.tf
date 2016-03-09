@@ -3,48 +3,54 @@
 provider "aws" {
   access_key = "${var.access_key}"
   secret_key = "${var.secret_key}"
-  region = "${var.region}"
+  region 	 = "${var.region}"
 }
 
-# Create a VPC
-resource "aws_vpc" "ecs" {
-	
-	cidr_block 				= "${var.vpc_cidr}"
-	enable_dns_support 		= true
-	enable_dns_hostnames	= true
+module "vpc" {
+	# Source the module:
+	source = "../modules/vpc"
 
-	tags		{ Name = "${var.cluster_name} ECS VPC" }
-	lifecycle 	{ create_before_destroy = true }
+	# Set module parameters here:
+	name = "${var.environment_name}-vpc"
+	cidr = "${var.vpc_cidr}"
 }
 
-# Create an IGW for the VPC
-resource "aws_internet_gateway" "ecs" {
-	vpc_id = "${aws_vpc.ecs.id}"
 
-	lifecycle { create_before_destroy = true }
+# TODO: Add ephemeral subnets for ECS insatnces
+
+# Create public subnet
+module "public_subnet" {
+	# Source the module:
+	source = "../modules/public_subnet"
+
+	# Set module parameters here:
+	name 		= "${var.environment_name}-public"
+	vpc_id 		= "${module.vpc.vpc_id}"
+	cidr_seed 	= "${var.vpc_cidr}"
+	azs 		= "${var.azs}"
 }
 
-# Let the VPC access the internet via the gateway
-resource "aws_route" "ecs-internet" {
-	route_table_id = "${aws_vpc.ecs.main_route_table_id}"
-	destination_cidr_block = "0.0.0.0/0"
-	gateway_id = "${aws_internet_gateway.ecs.id}"
+# Create NAT gateways
+module "nat" {
+	# Source the module:
+	source = "../modules/nat"
 
-	lifecycle { create_before_destroy = true }
+	# Set module parameters here:
+	name 			  = "${var.environment_name}-nat"
+	azs 			  = "${var.azs}"
+	public_subnet_ids = "${module.public_subnet.subnet_ids}"
 }
 
-# Create one subnet per availability zone
-# TODO: Add public/private/ephemeral subnets - modularize
-resource "aws_subnet" "ecs" {
-	vpc_id = "${aws_vpc.ecs.id}"
+# Create private subnets and associate with NAT gateways
+module "private_subnet" {
+	# Source the module:
+	source = "../modules/private_subnet"
 
-	# Onr-per-AZ magic
-	count 				= "${length(split(",", var.azs))}" # one per AZ
-	cidr_block 			= "${cidrsubnet(var.vpc_cidr, 8, count.index)}"
-	availability_zone 	= "${element(split(",", var.azs), count.index)}"
+	# Set module parameters here:
+	name 		= "${var.environment_name}-private"
+	vpc_id 		= "${module.vpc.vpc_id}"
+	cidr_seed 	= "${var.vpc_cidr}"
+	azs 		= "${var.azs}"
 
-	map_public_ip_on_launch = false
-
-	lifecycle { create_before_destroy = true }
+	nat_gateway_ids = "${module.nat.nat_gateway_ids}"
 }
-
