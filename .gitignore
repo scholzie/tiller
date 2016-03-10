@@ -1,6 +1,7 @@
-secure/*
+secure/
 .envrc
 *.tfstate
 *.tfstate.backup
 *.tfvars
 .chef/
+.terraform*
