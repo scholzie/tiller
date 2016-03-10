@@ -1,9 +1,7 @@
 variable "name" 			{ default = "public-sn" }
-variable "vpc_id"			{  }
-variable "cidr_seed"		{ 
-	description = "The starting cidr block from which to start counting off new subnets."
-}
-variable "azs"				{  }
+variable "vpc_id"			{ }
+variable "cidr_seed"		{ }
+variable "azs"				{ }
 
 resource "aws_internet_gateway" "public" {
 	vpc_id = "${var.vpc_id}"
@@ -18,9 +16,7 @@ resource "aws_internet_gateway" "public" {
 resource "aws_subnet" "public" {
 	vpc_id = "${var.vpc_id}"
 
-	# Using var.cidr_seed as the starting network (which is /16),
-	# Create 10.0.<even>.0/24 subnets
-	cidr_block 			= "${cidrsubnet(var.cidr_seed, 8, count.index*2)}"
+	cidr_block 			= "${cidrsubnet(var.cidr_seed, 8, count.index)}"
 	availability_zone 	= "${element(split(",", var.azs), count.index)}"
 	count 				= "${length(split(",", var.azs))}"
 
@@ -57,3 +53,4 @@ resource "aws_route_table_association" "public" {
 }
 
 output "subnet_ids" { value = "${join(",", aws_subnet.public.*.id)}" }
+output "cidr_blocks" { value = "${join(",", aws_subnet.public.*.cidr_block)}" }

@@ -16,4 +16,6 @@ resource "aws_nat_gateway" "nat" {
 	lifecycle { create_before_destroy = true }
 }
 
-output "nat_gateway_ids" { value = "${join(",", aws_nat_gateway.nat.*.id)}" }
+output "nat_gateway_ids" 	 { value = "${join(",", aws_nat_gateway.nat.*.id)}" }
+output "nat_eip_public_ips"  { value = "${join(",", aws_eip.nat.*.public_ip)}" }
+output "nat_eip_private_ips" { value = "${join(",", aws_eip.nat.*.private_ip)}" }

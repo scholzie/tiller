@@ -9,11 +9,6 @@ variable "ami" {
   description = "AMI id to launch, must be in the region specified by the region variable"
 }
 
-variable "vpc_cidr" { 
-    default = "10.0.0.0/16" 
-    description = "CIDR block for the VPC to use"
-}
-
 variable "inbound_ssh_cidrs" { 
     default = "10.0.0.0/24" 
     description = "Where SSH ingress will be allowed from"
@@ -34,10 +29,10 @@ variable "azs" {
     description = "Comma separated list of EC2 availability zones to launch instances, must be within region"
 }
 
-variable "security_group_ids" {
-    description = "Comma separated list of security group ids"
-    default = ""
-}
+# variable "security_group_ids" {
+#     description = "Comma separated list of security group ids"
+#     default = ""
+# }
 
 variable "instance_type" {
     default = "m1.small"
@@ -82,9 +77,6 @@ variable "registry_auth" {
     description = "Docker private registry login auth token (from ~/.dockercgf)"
 }
 
-variable "environment_name" {
-    default = ""
-    description = "Environment name (dev, etc.)"
-}
+variable "environment_name" { description = "Environment name (dev, etc.)" }
 variable "subnets"    { description = "Subnets to launch the cluster into." }
 variable "vpc_id"    { desc = "VPC to launch cluster into" }

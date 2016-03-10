@@ -11,14 +11,14 @@
 TF_DIR=./terraform
 
 # Figure out which build roles are valid
-ROLES=()
-pushd $TF_DIR > /dev/null
-for f in *; do
-    if [[ -d "$f" ]]; then
-        ROLES+=("$f")
-    fi
-done 
-popd > /dev/null
+ROLES=(network docker-ecs standard)
+#pushd $TF_DIR > /dev/null
+#for f in *; do
+#    if [[ -d "$f" ]]; then
+#        ROLES+=("$f")
+#    fi
+#done 
+#popd > /dev/null
 [[ $DEBUG ]] && echo "DEBUG: Valid ROLES: ${ROLES[@]}"
 
 HELP=("help" "-h" "--help" "-?")
@@ -87,25 +87,25 @@ fi
 
 
 # TODO: Make this a little nicer, if you feel like it.
-# Check for existance of AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID, and
-# AWS_REGION. If they aren't set, try to set them based on values in
-# terraform.tfvars
-if [[ -z "$AWS_ACCESS_KEY_ID" ]]; then
-    AWS_ACCESS_KEY_ID=$(grep -m1 access_key "$TFVARS" 2>/dev/null)
+AWS_ACCESS_KEY_ID=$(grep -m1 access_key "$TFVARS" 2>/dev/null)
+if [[ "$?" == "0" ]]; then
     export AWS_ACCESS_KEY_ID=$(get_variable "$AWS_ACCESS_KEY_ID")
     if [[ -z "$AWS_ACCESS_KEY_ID" ]]; then
         echo "AWS_ACCESS_KEY_ID not set and access_key not found in $TFVARS"
         exit 1
     fi
 fi
-if [[ -z "$AWS_SECRET_ACCESS_KEY" ]]; then
-    AWS_SECRET_ACCESS_KEY=$(grep -m1 secret_key "$TFVARS" 2>/dev/null)
+
+AWS_SECRET_ACCESS_KEY=$(grep -m1 secret_key "$TFVARS" 2>/dev/null)
+if [[ "$?" == "0" ]]; then
     export AWS_SECRET_ACCESS_KEY=$(get_variable "$AWS_SECRET_ACCESS_KEY")
     if [[ -z "$AWS_SECRET_ACCESS_KEY" ]]; then
         echo "AWS_SECRET_ACCESS_KEY not set and secret_key not found in $TFVARS"
         exit 1
+
     fi
 fi
+
 if [[ -z "$AWS_REGION" ]]; then
     AWS_DEFAULT_REGION=$(grep -m1 region "$TFVARS" 2>/dev/null)
     export AWS_DEFAULT_REGION=$(get_variable "$AWS_DEFAULT_REGION")
@@ -130,13 +130,13 @@ terraform remote config -backend="S3" -backend-config="bucket=${BUCKET}" -backen
 
 # Run Terraform, but don't fail if TF fails.
 set +e
-terraform $ACTION -var "environment_name=${ENVIRONMENT}"
+TF_VAR_environment_name="${ENVIRONMENT}" terraform "$ACTION"
 TF_EXIT_CODE=$?
 # Fail on errors again.
 set -e
 
 # Backup tfstate for versioning here, just in case the world blows up
-aws s3 cp .terraform/terraform.tfstate "s3://${BUCKET}/tfstate/${ENVIRONMENT}/${ROLE}/terraform.$(date +%Y-%m-%d-%H%M%S).${USER}.tfstate" 
+aws s3 cp .terraform/terraform.tfstate "s3://${BUCKET}/tfstate/${ENVIRONMENT}/${ROLE}/terraform.${USER}.tfstate" 
 
 # GTFO
 popd > /dev/null

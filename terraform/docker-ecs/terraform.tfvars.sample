@@ -1,0 +1,27 @@
+access_key="<AWS ACCESS KEY>"
+secret_key="<AWS SECRET KEY>"
+secret_bucket="<AWS SECRETS BUCKET>"
+region = "us-east-1"
+azs = "us-east-1a,us-east-1c,us-east-1d,us-east-1e"
+key_name="<EC2 KEY NAME>"
+cluster_name = "<CLUSTER NAME>"
+# needed if you're running terraform directly (not with wrapper)
+environment_name="dev"
+
+# Replace the values of these with the output from the 'network' module
+# subnets should be your 'ephemeral_subnet_ids'
+subnets="REPLACE"
+vpc_id="REPLACE"
+# Must match where your subnets are deployed. Output from 'network' module for ease of checking
+azs = "us-east-1a,us-east-1c,us-east-1d,us-east-1e"
+# AMI id from packer image creation
+ami="REPLACE"
+
+registry_url = "https://527817231603.dkr.ecr.us-east-1.amazonaws.com/deploy"
+registry_auth = "value"
+instance_type="t2.micro"
+min_size = "3"
+max_size = "6"
+desired_capacity = "3"
+iam_instance_profile = "AmazonECSContainerInstanceRole"
+tf_state_bucket_prefix="tfstate"

@@ -130,6 +130,9 @@ resource "aws_autoscaling_group" "docker-ecs" {
 	health_check_type = "EC2"
 	health_check_grace_period = "${var.health_check_grace_period}"
 	load_balancers = ["elb-${var.environment_name}-docker-ecs"]
+
+	depends_on = ["aws_elb.elb-docker-ecs"]
+
 	tag {
 		key = "Environment"
 		value = "${var.environment_name}"
