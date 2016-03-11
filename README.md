@@ -78,7 +78,7 @@ Once you have an operating network, you can then deploy the docker ECS cluster.
 - `cp terraform.tfvars.sample terraform.tfvars`
 - `vim terraform.tfvars`
   - Set `access_key` and `secret_key` as before
-  - `secret_bucket`: he secrets bucket in s3
+  - `secret_bucket`: the secrets bucket in s3
   - `key_name`: the key pair name you want to be applied to instances. This key
    must already exist.
   - `cluster_name`: the name you want to assign to your ECS cluster
