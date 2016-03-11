@@ -37,7 +37,7 @@ Because it probably won't work the first time.
 # Use
 To build any of the **Roles** in the terraform directory, you must first have a
 working "global" network configuration. See README.md under the
-[terraform](https://github.com/blueapron/poutine/tree/master/terraform)
+[terraform](terraform)
 directory for information on what this does, precisely.
 
 ### Create the network
