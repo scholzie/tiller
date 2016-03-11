@@ -37,7 +37,7 @@ Because it probably won't work the first time.
 # Use
 To build any of the **Roles** in the terraform directory, you must first have a
 working "global" network configuration. See README.md under the
-[terraform][https://github.com/blueapron/poutine/tree/master/terraform]
+[terraform](https://github.com/blueapron/poutine/tree/master/terraform)
 directory for information on what this does, precisely.
 
 ### Create the network
@@ -106,7 +106,7 @@ ubuntu@bastion$ ssh -i <ecs_key> ubuntu@<ec2_node_public_ip>
 ### Check that your ECS cluster has provisioned properly
 If the ECS nodes came up correctly, they should have initilized ECS-agent and
 auto-joined the cluster you created. To check this, go to the 
-[Amazon ECS][https://console.aws.amazon.com/ecs] console, go to the cluster you
+[Amazon ECS](https://console.aws.amazon.com/ecs) console, go to the cluster you
 created, click the ECS Instances tab, and ensure that the instances listed are
 indeed the ones that were created in the deployment step. 
 
