@@ -11,6 +11,13 @@ Tools to create an infrastructure for supporting dockerized applications.
 
 # Requirements
 To run these tools you will need a few things:
+### An (empty) AWS account
+- This tool will be creating tons of resources. Chances are, unless you have
+  previously taken steps to avoid it, you will hit resource limits by running
+  this against an account that is not already empty.
+- Set up a non-root user with administrative privileges. Note the access key ID
+  and secret access key.
+
 ### A bucket for secrets. A "secret bucket".
 Create an S3 bucket (with versioning, preferably) to store secrets in. 
 
@@ -22,7 +29,7 @@ These secrets will include:
 - Chef's validation.pem file
 
 *NB: Because of the sensitive nature of this data, access to this bucket should be
-tighly controlled.* 
+tighly controlled.* Open it for use to the user you created for this tool. 
 
 ### A good sense of humor
 Because it probably won't work the first time.
@@ -31,8 +38,9 @@ Because it probably won't work the first time.
 To build any of the **Roles** in the terraform directory, you must first have a
 working "global" network configuration. See README.md under the
 [terraform][https://github.com/blueapron/poutine/tree/master/terraform]
-directory for information on what this does, precisely. To just get it done,
-you can do this:
+directory for information on what this does, precisely.
+
+### Create the network
 - Enter the `terraform/network` directory and edit terraform.tfvars
   appropriately:
   - `cp terraform.tfvars.sample terraform.tfvars`
@@ -46,12 +54,20 @@ you can do this:
   `prod`, `staging`, or `dev`
 - Examine the output and be sure it makes sense.
 - Apply it: `./poutine apply <environment> network`
-- Keep note of all the outputs! You will need these later.
+- Keep note of all the outputs! You will need some of these later.
   - *NB:* Due to either a bug with terraform or an AWS race condition,
    occasionally the NAT EIPs will not output (you will see ",,," if that happens).
    You can run another command like `refresh` or `apply` or `plan` to get these
-   values to output.
+   values to output. Or go look in your account later. You don't need them for 
+   the next step.
 
+### Test your bastion host
+To make sure the network came up and the bastion host is properly provisioned,
+test logging into your bastion host from your laptop.
+
+`ssh -i <bastion_key> <bastion_user>@<bastion_public_ip>`
+
+### Deploy an ECS cluster
 Once you have an operating network, you can then deploy the docker ECS cluster.
 - First, build the packer image:
   - RTFM in the packer directory, then:
@@ -75,8 +91,27 @@ Once you have an operating network, you can then deploy the docker ECS cluster.
 - `./poutine apply <env> docker-ecs`, where `<env>` is the same one you used
   earlier during network creation.
 
-# If something is broken
+### Test connectivity to one of the ECS hosts
+To make sure networking is working properly to your ECS hosts, pick one at
+random and attempt to ssh into it from your bastion.
+```bash
+# Copy your ecs key to the bastion
+cscholz@laptop$ scp -i <bastion_key> <ecs_key> <bastion_user>@<bastion_public_ip>:~
+# SSH to the bastion
+cscholz@laptop$ ssh -i <bastion_key> <bastion_user>@<bastion_public_ip>
+# Use the key to attempt to connect to the ecs host
+ubuntu@bastion$ ssh -i <ecs_key> ubuntu@<ec2_node_public_ip>
+```
+
+### Check that your ECS cluster has provisioned properly
+If the ECS nodes came up correctly, they should have initilized ECS-agent and
+auto-joined the cluster you created. To check this, go to the 
+[Amazon ECS][https://console.aws.amazon.com/ecs] console, go to the cluster you
+created, click the ECS Instances tab, and ensure that the instances listed are
+indeed the ones that were created in the deployment step. 
+
+# If something is broken :shit:
 Blame @jackdwyer
 
-# If everything works
+# If everything works :sparkles:
 Thank @scholzie
