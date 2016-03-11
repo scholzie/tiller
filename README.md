@@ -37,7 +37,7 @@ Because it probably won't work the first time.
 # Use
 To build any of the **Roles** in the terraform directory, you must first have a
 working "global" network configuration. See README.md under the
-[terraform][https://github.com/blueapron/poutine/tree/master/terraform]
+[terraform](terraform)
 directory for information on what this does, precisely.
 
 ### Create the network
@@ -78,7 +78,7 @@ Once you have an operating network, you can then deploy the docker ECS cluster.
 - `cp terraform.tfvars.sample terraform.tfvars`
 - `vim terraform.tfvars`
   - Set `access_key` and `secret_key` as before
-  - `secret_bucket`: he secrets bucket in s3
+  - `secret_bucket`: the secrets bucket in s3
   - `key_name`: the key pair name you want to be applied to instances. This key
    must already exist.
   - `cluster_name`: the name you want to assign to your ECS cluster
@@ -106,7 +106,7 @@ ubuntu@bastion$ ssh -i <ecs_key> ubuntu@<ec2_node_public_ip>
 ### Check that your ECS cluster has provisioned properly
 If the ECS nodes came up correctly, they should have initilized ECS-agent and
 auto-joined the cluster you created. To check this, go to the 
-[Amazon ECS][https://console.aws.amazon.com/ecs] console, go to the cluster you
+[Amazon ECS](https://console.aws.amazon.com/ecs) console, go to the cluster you
 created, click the ECS Instances tab, and ensure that the instances listed are
 indeed the ones that were created in the deployment step. 
 
