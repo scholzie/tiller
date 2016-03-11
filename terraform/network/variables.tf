@@ -1,5 +1,9 @@
 variable "access_key"    {  }
 variable "secret_key"    {  }
+variable "aws_credentials" { 
+    default = "default" 
+    description = "Credential set from ~/.aws/credentials"
+}
 variable "environment_name" {
     default = ""
     description = "Environment name to tag EC2 resources with (tag=environment)"
@@ -21,10 +25,10 @@ variable "region" {
     description = "The region of AWS"
 }
 
-variable "azs" {
-    deafult = "us-east-1a"
-    description = "Comma separated list of EC2 availability zones to launch instances, must be within region"
-}
+# variable "azs" {
+#     deafult = "us-east-1a"
+#     description = "Comma separated list of EC2 availability zones to launch instances, must be within region"
+# }
 
 variable "bastion_instance_type" { default = "t2.micro" }
 variable "key_name"    { description = "Key name to use on the bastion host" }
