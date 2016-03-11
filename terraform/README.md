@@ -10,15 +10,10 @@ This script:
 - Passes environment and other important variables to `terraform` for you
 
 Use:
-`./poutine <action> <environment> <build_role>`
 
-For example, to see the plan for building a 'standard' environment in dev, run:
-`./poutine plan dev standard`
+`./poutine <action> <environment> <build_role>`
 
 The resulting environment will be properly tagged in AWS and proper default
 values will be chosen for you. To make any changes, you'll want to add/edit
 terraform.tfvars under the role in question.
 
-## TODO:
-- [ ] Bring the relevant README parts from the top level into this README
-- [ ] Finish and test this so it's actually useful!
