@@ -3,7 +3,7 @@ Tools to create an infrastructure for supporting dockerized applications.
 
 ## Contents:
 | Directory | Description | 
-| --- | --- |
+|   -- |   -- |
 | chef/ | Cookbooks for maintaning infrastructure. _Note: This will almost certainly move to its own repository_ |
 | packer/ | Configuration for creating the EC2 AMI for the EC2 Container Service |
 | terraform/ | Configuration for creating all of the infrastructure in AWS |
@@ -11,20 +11,20 @@ Tools to create an infrastructure for supporting dockerized applications.
 
 # Requirements
 To run these tools you will need a few things:
-## A bucket for secrets. A "secret bucket".
+### A bucket for secrets. A "secret bucket".
 Create an S3 bucket (with versioning, preferably) to store secrets in. 
 
 These secrets will include: 
 - the active tfstate, to maintain state between terraform runs by different people
 - a backup of tfstate, tagged with the user who created it, environment, and
-  date. This is nice to have if the world explodes and our single tfstate can't
+  date. This is nice to have if the world explodes and the aforementioned tfstate can't
   be trusted to be the truth anymore.
 - Chef's validation.pem file
 
-Because of the sensitive nature of this data, access to this bucket should be
-tighly controlled. 
+*NB: Because of the sensitive nature of this data, access to this bucket should be
+tighly controlled.* 
 
-## A good sense of humor
+### A good sense of humor
 Because it probably won't work the first time.
 
 # Use
@@ -35,42 +35,43 @@ directory for information on what this does, precisely. To just get it done,
 you can do this:
 - Enter the `terraform/network` directory and edit terraform.tfvars
   appropriately:
--- `cp terraform.tfvars.sample terraform.tfvars`
--- `access_key`: your AWS Access Key ID
--- `secret_key`: the Secret Access Key for the above ID
--- `environment_name`: will be overridden (as it's required input to run the script) - it's only there if you run terraform manually
--- `azs`: update this with the Availability Zones accessible by your account.
-   You can find these by running `aws ec2 --describe-availability-zones`
+  - `cp terraform.tfvars.sample terraform.tfvars`
+  - `access_key`: your AWS Access Key ID
+  - `secret_key`: the Secret Access Key for the above ID
+  - `environment_name`: will be overridden (as it's required input to run the
+    script) - it's only there if you run terraform manually
+  - `azs`: update this with the Availability Zones accessible by your account.
+    You can find these by running `aws ec2   -describe-availability-zones`
 - Plan it: `./poutine plan <env> network`, where `<env>` is something like
   `prod`, `staging`, or `dev`
 - Examine the output and be sure it makes sense.
 - Apply it: `./poutine apply <environment> network`
 - Keep note of all the outputs! You will need these later.
--- *NB:* Due to either a bug with terraform or an AWS race condition,
+  - *NB:* Due to either a bug with terraform or an AWS race condition,
    occasionally the NAT EIPs will not output (you will see ",,," if that happens).
    You can run another command like `refresh` or `apply` or `plan` to get these
    values to output.
 
 Once you have an operating network, you can then deploy the docker ECS cluster.
 - First, build the packer image:
--- RTFM in the packer directory, then:
--- `pushd packer && packer build ba-base.json && popd`
--- take note of the ami-id when the build is complete.
+  - RTFM in the packer directory, then:
+  - `pushd packer && packer build ba-base.json && popd`
+  - take note of the ami-id when the build is complete.
 - RTFM in the terraform/docker-ecs directory
 - `cd terraform/docker-ecs`
 - `cp terraform.tfvars.sample terraform.tfvars`
 - `vim terraform.tfvars`
--- Set `access_key` and `secret_key` as before
--- `secret_bucket`: he secrets bucket in s3
--- `key_name`: the key pair name you want to be applied to instances. This key
+  - Set `access_key` and `secret_key` as before
+  - `secret_bucket`: he secrets bucket in s3
+  - `key_name`: the key pair name you want to be applied to instances. This key
    must already exist.
--- `cluster_name`: the name you want to assign to your ECS cluster
--- `subnets`: comma-delimited list of subnet-ids (from network apply earlier)
--- `vpc_id`: vpc-id from the network setup
--- `ami`: The ami-id from the packer step above.
--- `registry_url`: Until the registry creation step is automated, replace this
+  - `cluster_name`: the name you want to assign to your ECS cluster
+  - `subnets`: comma-delimited list of subnet-ids (from network apply earlier)
+  - `vpc_id`: vpc-id from the network setup
+  - `ami`: The ami-id from the packer step above.
+  - `registry_url`: Until the registry creation step is automated, replace this
    with the endpoint URI for the docker registry you are using.
--- adjust other variables as you see fit.
+  - adjust other variables as you see fit.
 - `./poutine apply <env> docker-ecs`, where `<env>` is the same one you used
   earlier during network creation.
 
