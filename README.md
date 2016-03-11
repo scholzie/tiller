@@ -3,7 +3,7 @@ Tools to create an infrastructure for supporting dockerized applications.
 
 ## Contents:
 | Directory | Description | 
-|   -- |   -- |
+| --- | --- |
 | chef/ | Cookbooks for maintaning infrastructure. _Note: This will almost certainly move to its own repository_ |
 | packer/ | Configuration for creating the EC2 AMI for the EC2 Container Service |
 | terraform/ | Configuration for creating all of the infrastructure in AWS |
