@@ -40,13 +40,22 @@ echo "=== Starting Provisioning ===" | teestamp
 echo "Writing log to $LOGPATH." | teestamp
 
 echo "Creating /etc/chef..." | teestamp
-sudo mkdir -p /etc/chef 2>&1 | teestamp
+sudo mkdir -p /etc/chef | teestamp
+#sudo mkdir -p /etc/chef/ohai/hints | teestamp
+#sudo touch /etc/chef/ohai/hints/ec2.json | teestamp
+#sudo touch /etc/chef/ohai/hints/iam.json | teestamp
 
 echo "apt-get update..." | teestamp
 sudo apt-get update -y 2>&1 | teestamp
 
 echo "Installing python-pip..." | teestamp
-sudo apt-get install python-pip -y 2>&1 | teestamp
+# about half the time apt-get fails to install python-pip, so we will do it
+# with thje install script
+#sudo apt-get install python-pip -y 2>&1 | teestamp
+pushd /tmp
+curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+sudo python get-pip.py
+popd
 
 echo "Installing awscli..." | teestamp
 sudo pip install awscli 2>&1 | teestamp

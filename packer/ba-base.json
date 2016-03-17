@@ -7,6 +7,7 @@
 		"vpc_id"		: "{{env `PACKER_VPC_ID`}}",
 		"subnet_id"		: "{{env `PACKER_SUBNET_ID`}}",
 		"s3_bucket"		: "{{env `PACKER_S3_BUCKET`}}",
+        "iam_role"      : "{{env `IAM_INSTANCE_PROFILE`}}",
 		"aws_region"	: "us-east-1",
 		"source_ami"	: "ami-fce3c696"
 	},
@@ -21,7 +22,8 @@
 	    "ssh_username"					: "ubuntu",
 	    "ami_name"						: "ba-base_ubuntu14.04__{{timestamp}}",
         "vpc_id"                        : "{{user `vpc_id`}}",
-        "subnet_id"                     : "{{user `subnet_id`}}"
+        "subnet_id"                     : "{{user `subnet_id`}}",
+        "iam_instance_profile"          : "{{user `iam_role`}}"
 	}],
 	"provisioners": [
 		{
@@ -38,7 +40,7 @@
 		    "type"					: "chef-client",
 		    "server_url"			: "https://api.chef.io/organizations/blueapron",
 		    "validation_client_name": "blueapron-validator",
-            "run_list"              : ["ba_base", "datadog"],
+            "run_list"              : ["role[ec2_docker_host]"],
             "chef_environment"      : "ba-packer-base"
 		}
 	]
