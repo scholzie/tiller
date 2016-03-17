@@ -55,6 +55,7 @@ echo "Installing python-pip..." | teestamp
 pushd /tmp
 curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 sudo python get-pip.py
+rm /tmp/get-pip.py
 popd
 
 echo "Installing awscli..." | teestamp
