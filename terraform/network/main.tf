@@ -7,14 +7,14 @@ provider "aws" {
 }
 
 # Find all the AZs!
-module "az" {
-	# Source the module:
-	source = "github.com/terraform-community-modules/tf_aws_availability_zones"
+# module "az" {
+# 	# Source the module:
+# 	source = "github.com/terraform-community-modules/tf_aws_availability_zones"
 
-	# Set module parameters here:
-	region = "${var.region}"
-	account = "${var.aws_credentials}"
-}
+# 	# Set module parameters here:
+# 	region = "${var.region}"
+# 	account = "${var.aws_credentials}"
+# }
 
 module "vpc" {
 	# Source the module:
@@ -34,7 +34,9 @@ module "public_subnet" {
 	name 		= "${var.environment_name}-public"
 	vpc_id 		= "${module.vpc.vpc_id}"
 	cidr_seed	= "${var.vpc_cidr}"
-	azs 		= "${module.az.list_all}"
+	#azs 		= "${module.az.list_all}"
+	azs 		= "${var.azs}"
+
 }
 
 # Create bastion host
@@ -60,7 +62,8 @@ module "nat" {
 
 	# Set module parameters here:
 	name 			  = "${var.environment_name}-nat"
-	azs 			  = "${module.az.list_all}"
+	#azs 		= "${module.az.list_all}"
+	azs 		= "${var.azs}"	
 	public_subnet_ids = "${module.public_subnet.subnet_ids}"
 }
 
@@ -73,7 +76,8 @@ module "private_subnet" {
 	name 		= "${var.environment_name}-private"
 	vpc_id 		= "${module.vpc.vpc_id}"
 	cidr_blocks	= "${replace(join(",", split(",", module.public_subnet.cidr_blocks)), "/10\\.0\\./", "10.0.1")}"
-	azs 		= "${module.az.list_all}"
+	#azs 		= "${module.az.list_all}"
+	azs 		= "${var.azs}"	
 
 	nat_gateway_ids = "${module.nat.nat_gateway_ids}"
 }
@@ -87,8 +91,9 @@ module "ephemeral_subnet" {
 	name 		= "${var.environment_name}-ephemeral"
 	vpc_id 		= "${module.vpc.vpc_id}"
 	cidr_blocks	= "${replace(join(",", split(",", module.public_subnet.cidr_blocks)), "/10\\.0\\./", "10.0.2")}"
-	azs 		= "${module.az.list_all}"
-
+	#azs 		= "${module.az.list_all}"
+	azs 		= "${var.azs}"	
+	
 	nat_gateway_ids = "${module.nat.nat_gateway_ids}"
 }
 

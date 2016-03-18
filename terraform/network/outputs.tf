@@ -16,7 +16,8 @@ output "nat_eip_public_ips"  { value = "${module.nat.nat_eip_public_ips}" }
 output "nat_eip_private_ips" { value = "${module.nat.nat_eip_private_ips}" }
 
 # AZs
-output "azs" { value = "${module.az.list_all}" }
+# output "azs" { value = "${module.az.list_all}" }
+output "azs" { value = "${var.azs}" }
 
 # Bastion
 output "bastion_user" { value = "${module.bastion.user}" }

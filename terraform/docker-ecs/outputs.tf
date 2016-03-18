@@ -31,6 +31,3 @@ output "asg.launch_configuration" {
 output "asg.load_balancers" { 
 	value = "${join(",", aws_autoscaling_group.docker-ecs.load_balancers)}" 
 }
-output "launch_configuration.id" { 
-	value = "${aws_launch_configuration.lc-docker.id}" 
-}

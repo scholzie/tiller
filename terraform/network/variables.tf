@@ -25,10 +25,9 @@ variable "region" {
     description = "The region of AWS"
 }
 
-# variable "azs" {
-#     deafult = "us-east-1a"
-#     description = "Comma separated list of EC2 availability zones to launch instances, must be within region"
-# }
+variable "azs" {
+    description = "Comma separated list of EC2 availability zones to launch instances, must be within region"
+}
 
 variable "bastion_instance_type" { default = "t2.micro" }
 variable "key_name"    { description = "Key name to use on the bastion host" }

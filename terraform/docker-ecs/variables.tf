@@ -25,7 +25,6 @@ variable "region" {
 }
 
 variable "azs" {
-    deafult = "us-east-1a"
     description = "Comma separated list of EC2 availability zones to launch instances, must be within region"
 }
 
@@ -75,6 +74,10 @@ variable "registry_email" {
 variable "registry_auth" {
     default = ""
     description = "Docker private registry login auth token (from ~/.dockercgf)"
+}
+variable "ecs_host_chef_role" { 
+    default = "ec2_docker_host"
+    description = "Chef role to add to first-boot runlist when an ECS host is spawned." 
 }
 
 variable "environment_name" { description = "Environment name (dev, etc.)" }

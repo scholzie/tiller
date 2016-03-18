@@ -107,7 +107,7 @@ if [[ "$?" == "0" ]]; then
     fi
 fi
 
-if [[ -z "$AWS_REGION" ]]; then
+if [[ -z "$AWS_DEFAULT_REGION" ]]; then
     AWS_DEFAULT_REGION=$(grep -m1 region "$TFVARS" 2>/dev/null)
     export AWS_DEFAULT_REGION=$(get_variable "$AWS_DEFAULT_REGION")
     if [[ -z "$AWS_DEFAULT_REGION" ]]; then
@@ -124,6 +124,7 @@ pushd "${TF_DIR}/${ROLE}" > /dev/null
 [[ $DEBUG ]] && echo "AAKI: $AWS_ACCESS_KEY_ID ASAK: $AWS_SECRET_ACCESS_KEY ADR: $AWS_DEFAULT_REGION"
 # Set terraform remote config:
 TF_REMOTE_STATE_KEY="${ROLE}_${ENVIRONMENT}"
+[[ $DEBUG ]] && export TF_LOG=$DEBUG
 terraform remote config -backend="S3" -backend-config="bucket=${BUCKET}" -backend-config="key=${TF_REMOTE_STATE_KEY}"
 
 # Get remote config from S3
@@ -131,7 +132,7 @@ terraform remote config -backend="S3" -backend-config="bucket=${BUCKET}" -backen
 
 # Run Terraform, but don't fail if TF fails.
 set +e
-TF_VAR_environment_name="${ENVIRONMENT}" terraform "$ACTION"
+TF_VAR_environment_name="${ENVIRONMENT}" terraform $ACTION
 TF_EXIT_CODE=$?
 # Fail on errors again.
 set -e

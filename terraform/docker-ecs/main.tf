@@ -38,7 +38,7 @@ resource "aws_security_group" "elb-docker-sg" {
 
 # EC2 SG
 resource "aws_security_group" "ec2-docker-sg" {
-	name = "ec2-{var.environment_name}-docker-ecs-sg"
+	name = "ec2-${var.environment_name}-docker-ecs-sg"
 	description = "EC2 security for docker cluster"
 	vpc_id = "${var.vpc_id}"
 	# SSH Inbound
@@ -99,6 +99,17 @@ resource "aws_elb" "elb-docker-ecs" {
 	}
 }
 
+resource "template_file" "script" {
+	template = "${file("${path.cwd}/../templates/docker-ecs/user-data.tpl")}"
+
+	vars {
+		ecs_cluster = "${var.cluster_name}"
+		ecs_host_role = "${var.ecs_host_chef_role}"
+        ecs_host_environment = "ecs-hosts"
+	}
+}
+#output "user-data.sh" { value = "${template_file.script.rendered}" }
+
 # Launch Config
 resource "aws_launch_configuration" "lc-docker" {
 	name = "lc-${var.environment_name}-docker-ecs"
@@ -107,14 +118,10 @@ resource "aws_launch_configuration" "lc-docker" {
 	iam_instance_profile = "${var.iam_instance_profile}"
 	key_name = "${var.key_name}"
 	security_groups = ["${aws_security_group.ec2-docker-sg.id}"]
-	user_data = <<EOL
-#! /bin/bash
-echo ECS_CLUSTER=${var.cluster_name} >> /etc/ecs/ecs.config
-echo ECS_ENGINE_AUTH_TYPE=dockercfg >> /etc/ecs/ecs.config
-# echo ECS_ENGINE_AUTH_DATA='{\"${var.registry_url}\":{\"auth\":\"${var.registry_auth}\",\"email\":\"${var.registry_email}\"}}' >> /etc/ecs/ecs.config
-EOL
+	user_data = "${template_file.script.rendered}"
 
 	enable_monitoring = true
+	lifecycle { create_before_destroy = true }
 }
 
 # ASG
@@ -143,4 +150,5 @@ resource "aws_autoscaling_group" "docker-ecs" {
 		value = "ECS ${var.cluster_name}"
 		propagate_at_launch = true
 	}
+	lifecycle { create_before_destroy = true }
 }
