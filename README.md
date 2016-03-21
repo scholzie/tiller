@@ -118,10 +118,10 @@ Thank @scholzie
 
 # To Do:
 Task list - please claim, and/or update README with links to tasks or commits where appropriate.
-[ ] poutine/poutine: Add packer run functionality 
-[ ] poutine/poutine: Rename project "tiller", ./poutine -> ./till
-[ ] poutine/poutine: Capture output from network creation and pre-fill terraform.tfvars sample for other modules
-[ ] poutine/poutine: Add help system (see https://github.com/docopt/docopt)
-[ ] poutine/poutine: Make this a little nicer, if you feel like it.
-[ ] docker-ecs/main.tf: Investigate what SG rules are needed for apps to work
-[ ] docker-ecs/main.tf: Figure out subnets automatically. Either use a module, or pre-fill from network output
+- [ ] poutine/poutine: Add packer run functionality 
+- [ ] poutine/poutine: Rename project "tiller", ./poutine -> ./till
+- [ ] poutine/poutine: Capture output from network creation and pre-fill terraform.tfvars sample for other modules
+- [ ] poutine/poutine: Add help system (see https://github.com/docopt/docopt)
+- [ ] poutine/poutine: Make this a little nicer, if you feel like it.
+- [ ] docker-ecs/main.tf: Investigate what SG rules are needed for apps to work
+- [ ] docker-ecs/main.tf: Figure out subnets automatically. Either use a module, or pre-fill from network output
