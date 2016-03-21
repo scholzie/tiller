@@ -16,7 +16,7 @@ resource "aws_security_group" "elb-docker-sg" {
 	name = "elb-${var.environment_name}-docker-ecs-sg"
 	description = "ELB security for docker cluster"
 	vpc_id = "${var.vpc_id}"
-	# TODO: Investigate what we'll need for this
+	# TODO: Investigate what SG rules are needed for apps to work
 	ingress {
 	    protocol   	= "tcp"
 	    cidr_blocks = ["0.0.0.0/0"]
@@ -82,7 +82,7 @@ resource "aws_security_group" "ec2-docker-sg" {
 resource "aws_elb" "elb-docker-ecs" {
 	name = "elb-${var.environment_name}-docker-ecs"
 	# Subnets will have been made during global config.
-	# TODO: use a module to go get subnets
+	# TODO: Figure out subnets automatically. Either use a module, or pre-fill from network output
 	subnets = ["${split(",", var.subnets)}"]
 	listener {
 		instance_port 		= 80

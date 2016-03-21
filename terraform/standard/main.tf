@@ -131,7 +131,6 @@ resource "aws_elb" "ecs" {
 	subnets = ["${aws_subnet.ecs.*.id}"]
 	security_groups = ["${aws_security_group.ecs-elb.id}"]
 
-    # TODO: Make this actually work with the app
 	listener {
 		instance_port = 80
 		instance_protocol = "http"
