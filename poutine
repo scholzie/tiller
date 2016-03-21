@@ -6,6 +6,11 @@
 # Maintainer: DevOps Kr3w <devops@blueapron.com>
 # Author: Chris Scholz <scholzie@blueapron.com> // Don't blame plz
 
+# TODO: Add packer run functionality 
+# TODO: Rename project "tiller", ./poutine -> ./till
+# TODO: Capture output from network creation and pre-fill terraform.tfvars sample for other modules
+# TODO: Add help system (see https://github.com/docopt/docopt)
+
 [[ $DEBUG ]] && set -x
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -123,6 +128,7 @@ pushd "${TF_DIR}/${ROLE}" > /dev/null
 
 [[ $DEBUG ]] && echo "AAKI: $AWS_ACCESS_KEY_ID ASAK: $AWS_SECRET_ACCESS_KEY ADR: $AWS_DEFAULT_REGION"
 # Set terraform remote config:
+# FIXME: (0) State file correctly tagged, but future runs with different environment names affect previous environments. Not sure why...
 TF_REMOTE_STATE_KEY="${ROLE}_${ENVIRONMENT}"
 [[ $DEBUG ]] && export TF_LOG=$DEBUG
 terraform remote config -backend="S3" -backend-config="bucket=${BUCKET}" -backend-config="key=${TF_REMOTE_STATE_KEY}"
