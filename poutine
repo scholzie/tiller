@@ -11,26 +11,26 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TF_DIR="${SCRIPT_DIR}/terraform"
 
-# Figure out which build roles are valid
-ROLES=(network docker-ecs standard)
-#pushd $TF_DIR > /dev/null
-#for f in *; do
-#    if [[ -d "$f" ]]; then
-#        ROLES+=("$f")
-#    fi
-#done 
-#popd > /dev/null
+# Hardcode exclusions
+EXCLUDE=(modules templates)
+ROLES=()
+pushd "$TF_DIR" > /dev/null
+for f in *; do
+  if [[ -d "$f" ]]; then
+    if ! [[ "$f" =~ $EXCLUDE ]]; then
+      ROLES+=("$f")
+    fi
+  fi
+done 
+popd > /dev/null
+
 [[ $DEBUG ]] && echo "DEBUG: Valid ROLES: ${ROLES[@]}"
 
 HELP=("help" "-h" "--help" "-?")
 
 function help {
     echo "USAGE: ${0} <action> <environment> <build option>"
-    echo -n "Valid build options are: "
-    local opt 
-    for opt in "${ROLES[@]}"; do
-        echo -n "$opt"
-    done; echo ""
+    echo "Valid build options are: ${ROLES[*]}"
     exit 1
 }
 
