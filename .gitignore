@@ -5,3 +5,4 @@ secure/
 *.tfvars
 .chef/
 .terraform*
+*.sublime*
