@@ -126,15 +126,22 @@ set -ex
 # change to $ROLE directory
 pushd "${TF_DIR}/${ROLE}" > /dev/null
 
-[[ $DEBUG ]] && echo "AAKI: $AWS_ACCESS_KEY_ID ASAK: $AWS_SECRET_ACCESS_KEY ADR: $AWS_DEFAULT_REGION"
+[[ $DEBUG ]] && echo "\tAWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID\n\tAWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY\n\tAWS_DEFAULT_REGION: $AWS_DEFAULT_REGION"
 # Set terraform remote config:
 # FIXME: (0) State file correctly tagged, but future runs with different environment names affect previous environments. Not sure why...
 TF_REMOTE_STATE_KEY="${ROLE}_${ENVIRONMENT}"
-[[ $DEBUG ]] && export TF_LOG=$DEBUG
-terraform remote config -backend="S3" -backend-config="bucket=${BUCKET}" -backend-config="key=${TF_REMOTE_STATE_KEY}"
 
-# Get remote config from S3
-#aws s3 sync --exclude="*" --include="terraform.tfstate" "s3://${BUCKET}/tfstate/${ENVIRONMENT}/${ROLE}/" ./
+# Remove any traces of local tfstate files. I think those are screwing up
+# cross-environment builds
+if [[ -f ".terraform/terraform.tfstate" ]]; then
+    echo "=== Moving .terraform/*.tfstate* to .terraform/ba-backup/ ==="
+    mkdir -p ./terraform/ba-backup
+    mv .terraform/*.tfstate* .terraform/ba-backup/
+fi
+
+[[ $DEBUG ]] && export TF_LOG=$DEBUG
+echo "=== Configuring remote state management for $ENVIRONMENT-$ROLE in $BUCKET bucket. ==="
+terraform remote config -backend="S3" -backend-config="bucket=${BUCKET}" -backend-config="key=${TF_REMOTE_STATE_KEY}"
 
 # Run Terraform, but don't fail if TF fails.
 set +e
@@ -144,7 +151,13 @@ TF_EXIT_CODE=$?
 set -e
 
 # Backup tfstate for versioning here, just in case the world blows up
+echo "=== Backing up state to cloud storage (just in case) ==="
 aws s3 cp .terraform/terraform.tfstate "s3://${BUCKET}/tfstate/${ENVIRONMENT}/${ROLE}/terraform.${USER}.tfstate" 
+
+# remove all state files
+echo "=== Deleting local terraform.tfstate files ==="
+rm -rf .terraform/terraform.tfstate* 
+rm -rf .terraform/ba-backup
 
 # GTFO
 popd > /dev/null
