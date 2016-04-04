@@ -1,6 +1,0 @@
-source 'https://supermarket.chef.io'
-
-metadata
-cookbook 'docker', '~> 2.5.8'
-cookbook 'amazon-ecs-agent', '~> 0.1.1'
-
