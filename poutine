@@ -14,7 +14,7 @@
 [[ $DEBUG ]] && set -x
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-TF_DIR="${SCRIPT_DIR}/terraform"
+TF_DIR="${SCRIPT_DIR}/resources/terraform"
 
 # Hardcode exclusions
 EXCLUDE=(modules templates)
@@ -135,7 +135,7 @@ TF_REMOTE_STATE_KEY="${ROLE}_${ENVIRONMENT}"
 # cross-environment builds
 if [[ -f ".terraform/terraform.tfstate" ]]; then
     echo "=== Moving .terraform/*.tfstate* to .terraform/ba-backup/ ==="
-    mkdir -p ./terraform/ba-backup
+    mkdir -p ./.terraform/ba-backup
     mv .terraform/*.tfstate* .terraform/ba-backup/
 fi
 

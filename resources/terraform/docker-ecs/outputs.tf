@@ -31,3 +31,6 @@ output "asg.launch_configuration" {
 output "asg.load_balancers" { 
 	value = "${join(",", aws_autoscaling_group.docker-ecs.load_balancers)}" 
 }
+output "cluster.load_balancer_public_dns" { 
+    value = "${aws_elb.elb-docker-ecs.dns_name}"
+}

@@ -81,5 +81,6 @@ variable "ecs_host_chef_role" {
 }
 
 variable "environment_name" { description = "Environment name (dev, etc.)" }
-variable "subnets"    { description = "Subnets to launch the cluster into." }
+variable "private_subnets"    { description = "Subnets to launch the cluster into." }
+variable "public_subnets"    { description = "Subnets to launch ELB in, this must match the AZ's the private subnets are in" }
 variable "vpc_id"    { desc = "VPC to launch cluster into" }

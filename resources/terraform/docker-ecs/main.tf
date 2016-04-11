@@ -24,16 +24,17 @@ resource "aws_security_group" "elb-docker-sg" {
 	    to_port    	= 80
 	}
 	egress {
-	    protocol   	= "-1"
-	    cidr_blocks = ["0.0.0.0/0"]
-	    from_port  	= 0
-	    to_port    	= 0
+	    protocol   	= "tcp"
+	    from_port  	= 80
+	    to_port    	= 80
+        security_groups = ["${aws_security_group.ec2-docker-sg.id}"]
 	}
 	lifecycle { create_before_destroy = true }
 	tags {
 		Environment = "${var.environment_name}"
 		role = "docker-ecs"
 	}
+	depends_on = ["aws_security_group.ec2-docker-sg"]
 }
 
 # EC2 SG
@@ -83,7 +84,7 @@ resource "aws_elb" "elb-docker-ecs" {
 	name = "elb-${var.environment_name}-docker-ecs"
 	# Subnets will have been made during global config.
 	# TODO: Figure out subnets automatically. Either use a module, or pre-fill from network output
-	subnets = ["${split(",", var.subnets)}"]
+	subnets = ["${split(",", var.public_subnets)}"]
 	listener {
 		instance_port 		= 80
 		instance_protocol 	= "tcp"
@@ -128,8 +129,7 @@ resource "aws_launch_configuration" "lc-docker" {
 resource "aws_autoscaling_group" "docker-ecs" {
 	name = "asg-${var.environment_name}-docker-ecs"
 	availability_zones = ["${split(",", var.azs)}"]
-	vpc_zone_identifier = ["${split(",", var.subnets)}"]
-	depends_on = ["aws_launch_configuration.lc-docker"]
+	vpc_zone_identifier = ["${split(",", var.private_subnets)}"]
 	launch_configuration = "${aws_launch_configuration.lc-docker.id}"
 	min_size = "${var.min_size}"
 	max_size = "${var.max_size}"
@@ -138,7 +138,7 @@ resource "aws_autoscaling_group" "docker-ecs" {
 	health_check_grace_period = "${var.health_check_grace_period}"
 	load_balancers = ["elb-${var.environment_name}-docker-ecs"]
 
-	depends_on = ["aws_elb.elb-docker-ecs"]
+	depends_on = ["aws_launch_configuration.lc-docker", "aws_elb.elb-docker-ecs"]
 
 	tag {
 		key = "Environment"
