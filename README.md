@@ -1,6 +1,3 @@
-If remote tracking and arc are working properly, this edit should only exist in
-the develop branch.
-
 # Synopsis
 Tools to create an infrastructure for supporting dockerized applications.
 
