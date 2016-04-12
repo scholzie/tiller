@@ -8,7 +8,7 @@
 		"subnet_id"		: "{{env `PACKER_SUBNET_ID`}}",
 		"secret_bucket"	: "{{env `PACKER_SECRET_BUCKET`}}",
         "iam_role"      : "{{env `IAM_INSTANCE_PROFILE`}}",
-		"aws_region"	: "us-east-1",
+		"aws_region"	: "{{env `PACKER_AWS_REGION`}}",
 		"source_ami"	: "ami-fce3c696"
 	},
 	"builders": [{
@@ -20,7 +20,7 @@
 	    "source_ami"					: "{{user `source_ami`}}",
 	    "instance_type"					: "m3.medium",
 	    "ssh_username"					: "ubuntu",
-	    "ami_name"						: "ba-base_ubuntu14.04__{{timestamp}}",
+	    "ami_name"						: "ba-base_ubuntu14.04_{{timestamp}}",
         "vpc_id"                        : "{{user `vpc_id`}}",
         "subnet_id"                     : "{{user `subnet_id`}}",
         "iam_instance_profile"          : "{{user `iam_role`}}"
