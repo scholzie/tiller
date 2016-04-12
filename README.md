@@ -1,4 +1,3 @@
-test
 # Synopsis
 Tools to create an infrastructure for supporting dockerized applications.
 
