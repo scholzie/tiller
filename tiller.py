@@ -43,7 +43,7 @@ version = '0.0.1'
 
 
 @tl.logged(logging.DEBUG)
-def compile_resources():
+def list_resources():
     resources = {}
     # Enter resources subdirectory(-ies) and look for config files
     resources_dirname = "resources"
@@ -60,7 +60,8 @@ def compile_resources():
                     r = PackerResource.from_config(os.path.join(root,f))
                 else:
                     r = TillerResource.from_config(os.path.join(root, f))
-                # Create a new entry in resource{} with the name of the resource as the value
+                # Create a new entry in resource{} with the name of the 
+                # resource as the value
                 if r:
                     rkey = '{}/{}'.format(r.namespace, r.name)
                     resources[rkey] = r
@@ -69,16 +70,39 @@ def compile_resources():
     return resources
 
 
-# TODO: Rather than compile all resources and pick one, start by assuming we know the name
-# reach out and grab it, then return the proper TillerResource.from_config()
+# TODO: Rather than compile all resources and pick one, start by assuming we 
+# know the name reach out and grab it, then return the proper 
+# TillerResource.from_config(). As this stands, this will only work if the name
+# of the resource is the same as its directory, which we don't enforce.
+# Right now, we just run list_resources() and pull out the correct named one for
+# the sake of compatability with the future intent of this function's use.
 def resource_by_name(resource_name):
     """return a named resource (namespace/name)"""
-    pass
+    path = os.path.join('resources', os.path.dirname(resource_name))
+    resource = os.path.basename(resource_name)
+    namespace = path.split('/')[1]
+    config = os.path.join(path, "config.tiller")
+    logging.debug('resource_name: {}, path: {}, resource_name: {}, '
+                  'namespace: {}, config file: {}'.format(
+                    resource_name,
+                    path,
+                    resource,
+                    namespace,
+                    config))
+#     if namespace == 'terraform':
+#         r = TerraformResource.from_config(config)
+#     elif namespace == 'packer':
+#         r = PackerResource.from_config(config)
+#     else:
+#         r = TillerResource.from_config(config)
+
+    return list_resources()[resource_name]
 
 
 @tl.logged(logging.DEBUG)
-def describe(resource):
+def describe(resource_name):
     """Describe a resource"""
+    resource = resource_by_name(resource_name)
     print "Resource: ", '/'.join([resource.namespace,resource.name])
     prefix="Description: "
     description = textwrap.TextWrapper(initial_indent=prefix,
@@ -109,8 +133,11 @@ def parse_runtime_args(args):
     return dict(kv.split('=') for kv in args)
 
 def main(args):
+
     if args['--debug']:
         logging.basicConfig(level=logging.DEBUG)
+    elif args['--verbose']:
+        logging.basicConfig(level=logging.INFO)
     else:
         logging.basicConfig(level=logging.ERROR)
 
@@ -119,7 +146,7 @@ def main(args):
         logging.info("Planning for {}".format(args['<resource>']))
         plan_args = parse_runtime_args(args['--var'])
 
-        res = compile_resources()
+        res = list_resources()
         r = res[args['<resource>']]
         r.plan()
 
@@ -128,44 +155,48 @@ def main(args):
         logging.info("Building {}".format(args['<resource>']))
         build_args = parse_runtime_args(args['--var'])
         logging.debug("build_args: {}".format(build_args))
-        res = compile_resources()
-        r = res[args['<resource>']]
+        r = resource_by_name(args['<resource>'])
         r.build(**build_args)
 
     elif args['show']:
         # TODO: Implement 'show'
         logging.info("Showing.")
+
     elif args['describe']:
         resname = args['<resource>']
         logging.info("Describing {}".format(resname))
         try:
-            describe(compile_resources()[resname])
+            describe(resname)
         except KeyError as err:
             msg = "No valid resource named {}".format(resname)
             logging.error("[Tiller:{}] {}".format(__name__, msg))
-            raise TillerException(msg)
-
-
+            raise tl.TillerException(msg)
 
     elif args['destroy']:
         # TODO: Implement 'destroy'
         logging.info("Destroying.")
+
     elif args['list']:
         logging.info("Listing resources.")
-        resources = compile_resources()
+        resources = list_resources()
         print('The following resources are availble:')
         for r in resources.values():
             if r.depends_on:
-                print('\t{:<16}\t{} (Depends on {})'.format(*['/'.join([r.namespace,r.name]), r.description, ', '.join(r.depends_on)]))
+                print('\t{:<16}\t{} (depends on {})'.format(*['/'.join(
+                [r.namespace,r.name]), r.description, ', '.join(r.depends_on)]))
             else:
-                print('\t{:<16}\t{}'.format(*['/'.join([r.namespace,r.name]), r.description]))
+                print('\t{:<16}\t{}'.format(*['/'.join([r.namespace,r.name]), 
+                                            r.description]))
 
 
         print('\nFor more information see: ./tiller.py describe <resource>')
 
     elif args['stage']:
-        # TODO: Implement 'stage'
-        logging.info("Staging terraform for manual run.")
+        logging.info("Staging for manual run.")
+        logging.info("REMINDER: This will leave things in a potentially unclean"
+                     " state. Recommended that you clean up afterwards.")
+        r = resource_by_name(args['<resource>'])
+        r.stage(**parse_runtime_args(args['--var']))
 
 
 if __name__ == '__main__':

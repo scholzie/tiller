@@ -4,6 +4,7 @@ import logging
 import os
 import json
 import subprocess
+# from StringIO import StringIO
 
 class PackerResource(TillerResource):
     """docstring for PackerResource"""
@@ -27,8 +28,10 @@ class PackerResource(TillerResource):
         self.validate_tiller_config()
         self._staged = all([self._config_valid, self._packer_file])
         
-        logging.debug("Staging: self._packer_file: {}".format(self._packer_file))
-        logging.debug("Staging: self._config_valid: {}".format(self._config_valid))
+        logging.debug("Staging: self._packer_file: {}".format(
+                                                            self._packer_file))
+        logging.debug("Staging: self._config_valid: {}".format(
+                                                            self._config_valid))
         logging.debug("Staging: self._staged: {}".format(self._staged))
 
         return self._staged
@@ -38,29 +41,59 @@ class PackerResource(TillerResource):
         if not self._staged:
             logging.debug("Environment is not staged - attempting to stage")
             self.stage(*args, **kwargs)
-            logging.debug("self._staged after staging attempt: {}".format(self._staged))
+            logging.debug("self._staged after staging attempt: {}".format(
+                                                                self._staged))
         if not self._staged:
-            raise TillerException("Unable to build - environment not staged.")
+            raisetl.TillerException("Unable to build - environment not staged.")
 
         logging.debug("args {}".format(args))
         logging.debug("kwargs {}".format(kwargs))
-        logging.debug("Trying to build {}".format(os.path.join(self.path, self._packer_file)))
+        logging.debug("Trying to build {}".format(
+            os.path.join(self.path, self._packer_file)))
         try:
-            if not subprocess.check_call(['packer','build','-machine-readable',self._packer_file], cwd=self.path, env=os.environ):
-                logging.error("Could not build {} ({}). See output for details.".format('/'.join([self.namespace, self.name]), self._packer_file))
+            build_proc = subprocess.Popen(
+                  ['packer','build','-machine-readable',self._packer_file], 
+                  cwd = self.path, 
+                  env = os.environ,
+                  stdout = subprocess.PIPE,
+                  stderr = subprocess.STDOUT
+            )
+
+            # send most important messages to info log. Everything else to debug
+            for line in iter(build_proc.stdout.readline, ""):
+                mtype = line.split(',')[3]
+                if mtype == 'say':
+                    logging.info(line)
+                elif mtype == 'error':
+                    logging.error(line)
+                else:
+                    logging.debug(line)
+
+            build_proc.stdout.close()
+            build_proc.wait()
+
+            build_return = build_proc.returncode
+            logging.debug("Packer build return code: {}".format(build_return))
+            if build_return != 0:
+                logging.error("Could not build {} ({}). See output for "
+                              "details.".format('/'.join([self.namespace, 
+                                                self.name]), self._packer_file))
                 logging.debug("{} not deleted".format(self._packer_file))
             else:
-                logging.info("Resource {} successfully built".format('/'.join([self.namespace, self.name])))
+                logging.info("Resource {} successfully built".format(
+                                        '/'.join([self.namespace, self.name])))
                 logging.debug("Deleting {}".format(self._packer_file))
-                os.remove(self._packer_file)
+                self.cleanup()
         except Exception as e:
             logging.error("Error while building packer file: {}".format(e))
+        
 
     @tl.logged(logging.DEBUG)
     def validate_tiller_config(self):
         super(PackerResource, self).validate_tiller_config()
         logging.debug(self.name)
-        config_path = os.path.join(self.path, self.name + self._template_extension)
+        config_path = os.path.join(self.path, 
+                                   self.name + self._template_extension)
         logging.debug("Validating config path: {} ".format(config_path))
         if os.path.exists(config_path):
             self._config_valid = True
@@ -71,20 +104,23 @@ class PackerResource(TillerResource):
             packer_file = self._packer_file
 
         try:
-            subprocess.check_call(['packer','validate',packer_file], cwd=self.path)
-            logging.debug("Validated Packer file successfully: {}".format(packer_file))
+            subprocess.check_call(['packer','validate',packer_file], 
+                                  cwd=self.path)
+            logging.debug("Validated Packer file successfully: {}".format(
+                                                                packer_file))
             return packer_file
         except subprocess.CalledProcessError as e:
             logging.error("{} not a valid config: {}".format(packer_file, e))
         except Exception as e:
-            logging.error("Error while attempting to validate {}: {}".format(packer_file, e))
+            logging.error("Error while attempting to validate {}: {}".format(
+                                                                packer_file, e))
         else:
             return None
 
 
-    # TODO: change this so we can figure out what variables to require. For instance, a
-    #   'secret_bucket' should not be a hard-coded requirement. We should be able to
-    #   infer which variables are required from the template file
+    # TODO: change this so we can figure out what variables to require.
+    # For instance, a 'secret_bucket' should not be a hard-coded requirement.
+    # We should be able to infer which variables are required from the template
     @tl.logged(logging.DEBUG, msg="Generating JSON")
     def generate_json(self, *args, **kwargs):
         logging.debug("args: {}".format(repr(args)))
@@ -96,7 +132,8 @@ class PackerResource(TillerResource):
 
         # bring variables in
         template_vars = dict(template['variables'])
-        logging.debug("Variables imported from template {}: {}".format(_file, template_vars))
+        logging.debug("Variables imported from template {}: {}".format(_file, 
+                                                                template_vars))
 
         env_vars = {
             'aws_access_key':  os.environ.get('PACKER_ACCESS_KEY'),
@@ -118,19 +155,23 @@ class PackerResource(TillerResource):
         # (i.e., we don't want to create new keys that are passed in)
         for key in template_vars.keys():
             override_val = kwargs.get(key)
-            logging.debug("--var key: {}, --var value: {}".format(key, override_val))
+            logging.debug("--var key: {}, --var value: {}".format(key, 
+                                                                  override_val))
             template_vars[key] = override_val if override_val else template_vars[key]
 
         # Now bail if any variables are empty
         if None in template_vars.itervalues():
-            raise TillerException("Empty variables in packer configuration are not allowed.")
+            raise TillerException("Empty variables in packer configuration are "
+                                  "not allowed.")
         else:
             with open(_file.rstrip(self._tiller_extention), 'w') as f:
                 template['variables'] = template_vars
                 json.dump(template, f, indent=4, separators=[',',': '])
 
-        # Packer validate, return None if fail, else return the fname of the finished file
-        _out_file = os.path.basename(_file.rstrip(self._tiller_extention))
+        # Packer validate, return None if fail, else return the fname of the 
+        # finished file
+        _out_file = os.path.abspath(_file.rstrip(self._tiller_extention))
+        # _out_file = os.path.basename(_file.rstrip(self._tiller_extention))
         logging.debug("Wrote file: {}".format(_out_file))
 
         # return file name if valid or None
@@ -139,3 +180,13 @@ class PackerResource(TillerResource):
     @tl.logged(logging.DEBUG)
     def plan(self):
         pass
+
+    @tl.logged(logging.DEBUG)
+    def cleanup(self):
+        try:
+            os.remove(self._packer_file)
+        except OSError:
+            logging.debug("No file {} to delete".format(self._packer_file))
+        finally:
+            self._staged = False
+            logging.debug("Unstaged %s" % self)

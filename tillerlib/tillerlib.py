@@ -1,5 +1,6 @@
 import logging
 from functools import wraps
+import subprocess
 
 class TillerException(Exception):
     """Wrapper for Tiller Exceptions"""
@@ -28,3 +29,4 @@ def logged(level, name=None, msg=None):
             return func(*args, **kwargs)
         return wrapper
     return decorate
+    
