@@ -151,7 +151,7 @@ def main(args):
         r.plan()
 
     elif args['build']:
-        # TODO: finish build
+        # TODO: finish 'build'
         logging.info("Building {}".format(args['<resource>']))
         build_args = parse_runtime_args(args['--var'])
         logging.debug("build_args: {}".format(build_args))

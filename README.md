@@ -74,19 +74,24 @@ Please use the `develop` branch for all contributions. All changes should be mad
 
 # Planned Changes
 ## FIXME (1)
-1. poutine/poutine:131       (0) State file correctly tagged, but future runs with different environment names affect previous environments. Not sure why...
+1. poutine/poutine:131         (0) State file correctly tagged, but future runs with different environment names affect previous environments. Not sure why...
 
-## TODO (13)
-1. poutine/poutine:9         Add packer run functionality 
-2. poutine/poutine:10        Rename project "tiller", ./poutine -> ./till
-3. poutine/poutine:11        Capture output from network creation and pre-fill terraform.tfvars sample for other modules
-4. poutine/poutine:12        Add help system (see https://github.com/docopt/docopt)
-5. poutine/poutine:95        Make this a little nicer, if you feel like it.
-6. poutine/tiller.py:73      Rather than compile all resources and pick one, start by assuming we 
-7. poutine/tiller.py:145     Implement 'plan'
-8. poutine/tiller.py:154     finish build
-9. poutine/tiller.py:162     Implement 'show'
-10. poutine/tiller.py:176    Implement 'destroy'
-11. docker-ecs/main.tf:19    Investigate what SG rules are needed for apps to work
-12. docker-ecs/main.tf:85    Figure out subnets automatically. Either use a module, or pre-fill from network output
-13. resources/packer.py:121  change this so we can figure out what variables to require.
+## TODO (18)
+1. poutine/poutine:9           Add packer run functionality 
+2. poutine/poutine:10          Rename project "tiller", ./poutine -> ./till
+3. poutine/poutine:11          Capture output from network creation and pre-fill terraform.tfvars sample for other modules
+4. poutine/poutine:12          Add help system (see https://github.com/docopt/docopt)
+5. poutine/poutine:95          Make this a little nicer, if you feel like it.
+6. poutine/tiller.py:73        Rather than compile all resources and pick one, start by assuming we 
+7. poutine/tiller.py:145       Implement 'plan'
+8. poutine/tiller.py:154       finish 'build'
+9. poutine/tiller.py:162       Implement 'show'
+10. poutine/tiller.py:176      Implement 'destroy'
+11. docker-ecs/main.tf:19      Investigate what SG rules are needed for apps to work
+12. docker-ecs/main.tf:85      Figure out subnets automatically. Either use a module, or pre-fill from network output
+13. resources/packer.py:120    change this so we can figure out what variables to require.
+14. resources/packer.py:181    implement PackerResource.plan()
+15. resources/terraform.py:13  implement TerraformResource.plan()
+16. resources/terraform.py:17  implement TerraformResource.build()
+17. resources/terraform.py:21  implement TerraformResource.show()
+18. resources/terraform.py:25  implement TerraformResource.destroy()

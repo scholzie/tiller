@@ -4,7 +4,6 @@ import logging
 import os
 import json
 import subprocess
-# from StringIO import StringIO
 
 class PackerResource(TillerResource):
     """docstring for PackerResource"""
@@ -179,6 +178,7 @@ class PackerResource(TillerResource):
 
     @tl.logged(logging.DEBUG)
     def plan(self):
+        # TODO: implement PackerResource.plan()
         pass
 
     @tl.logged(logging.DEBUG)
