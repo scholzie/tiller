@@ -2,5 +2,5 @@
 name = awsbase
 description = Base infrastructure requirements
 long_description = This resource builds the following base AWS infrastructure: A VPC, public and private subnets in each named Availability Zone, bastion host, NAT, ACLs and Security Groups
-depends_on = ["terraform/base"]
+depends_on = ["packer/ba-base-ami"]
 required_vars = ["ami","cluster_name"]

@@ -6,7 +6,7 @@
         "bucket_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
 		"vpc_id"		: "{{env `PACKER_VPC_ID`}}",
 		"subnet_id"		: "{{env `PACKER_SUBNET_ID`}}",
-		"s3_bucket"		: "{{env `PACKER_S3_BUCKET`}}",
+		"secret_bucket"	: "{{env `PACKER_SECRET_BUCKET`}}",
         "iam_role"      : "{{env `IAM_INSTANCE_PROFILE`}}",
 		"aws_region"	: "us-east-1",
 		"source_ami"	: "ami-fce3c696"
@@ -33,7 +33,7 @@
 				"AWS_ACCESS_KEY_ID={{user `bucket_access_key`}}",
 				"AWS_SECRET_ACCESS_KEY={{user `bucket_secret_key`}}",
 				"AWS_REGION={{user `aws_region`}}",
-				"SECRET_BUCKET={{user `s3_bucket`}}"
+				"PACKER_SECRET_BUCKET={{user `secret_bucket`}}"
 			]
 		},
   		{
