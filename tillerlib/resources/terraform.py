@@ -141,9 +141,9 @@ class TerraformResource(TillerResource):
         try:
             self.check_stage(*args, **kwargs)
 
-            cmd = "terraform build".split()
+            cmd = "terraform apply".split()
             args = self._global_terraform_args
-            args += ['-var', 'environment_name={}'.format(self.environment_name)]
+            args += ['-var', 'environment_name={}'.format(self.environment)]
             oldLogLevel = logging.getLogger().level
             if oldLogLevel > logging.INFO:
                 logging.getLogger().setLevel(logging.INFO)
