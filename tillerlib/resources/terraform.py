@@ -97,23 +97,30 @@ class TerraformResource(TillerResource):
     def validate(self):
         return True
 
-    @tl.logged(logging.DEBUG)
-    def plan(self, *args, **kwargs):
-
+    @tl.logged(logging.DEBUG)    
+    def check_stage(self, *args, **kwargs):
         if not self._staged:
-            logging.debug("Environment is not staged - attempting to stage")
+            logging.debug("Environment not staged - attempting to stage")
             self.stage(*args, **kwargs)
             logging.debug("Staged after attempt? {}".format(self._staged))
         if not self._staged:
-            raise tl.TillerException("Unable to build - environment not staged")
+            raise tl.TillerException("Unable to stage environment")
+
+        return self._staged
+
+
+    @tl.logged(logging.DEBUG)
+    def plan(self, *args, **kwargs):
 
         logging.debug("args {}".format(args))
         logging.debug("kwargs {}".format(kwargs))
 
         try:
+            self.check_stage(*args, **kwargs)
+
             cmd = "terraform plan".split()
             args = self._global_terraform_args
-            args += ['-var', 'environment_name=%s' % self.environment]
+            args += ['-var', 'environment_name={}'.format(self.environment)]
             oldLogLevel = logging.getLogger().level
             if oldLogLevel > logging.INFO:
                 logging.getLogger().setLevel(logging.INFO)
@@ -125,15 +132,38 @@ class TerraformResource(TillerResource):
             self.cleanup()
 
 
-    def build(self):
-        # TODO: implement TerraformResource.build()
-        pass
+    @tl.logged(logging.DEBUG)
+    def build(self, *args, **kwargs):
 
-    def show(self):
+        logging.debug("args {}".format(args))
+        logging.debug("kwargs {}".format(args))
+
+        try:
+            self.check_stage(*args, **kwargs)
+
+            cmd = "terraform build".split()
+            args = self._global_terraform_args
+            args += ['-var', 'environment_name={}'.format(self.environment_name)]
+            oldLogLevel = logging.getLogger().level
+            if oldLogLevel > logging.INFO:
+                logging.getLogger().setLevel(logging.INFO)
+            tl.run(cmd, args, self.path)
+            logging.getLogger().setLevel(oldLogLevel)
+        except Exception as e:
+            logging.error("Error while building: {}".format(e))
+        finally:
+            self.cleanup()
+
+
+    def show(self, *args, **kwargs):
         # TODO: implement TerraformResource.show()
-        if not self.stage():
-            raise tl.TillerException("Environment not staged")
-        tl.run('terraform show'.split(), cwd=self.path)
+        try:
+            self.check_stage(*args, **kwargs)
+            tl.run('terraform show'.split(), cwd=self.path)
+        except Exception as e:
+            logging.error("Error while showing: {}".format(e))
+        finally:
+            self.cleanup()
 
     def destroy(self):
         # TODO: implement TerraformResource.destroy()
