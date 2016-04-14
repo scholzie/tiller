@@ -14,6 +14,7 @@ class PackerResource(TillerResource):
         self.path = path
         self.args = args
         self.kwargs = kwargs
+        self._global_packer_args = '-machine-readable -color=false'.split()
         self._template_extension = '.json.tiller'
         self._tiller_extention = os.path.splitext(self._template_extension)[1]
         self._packer_file = None
@@ -27,10 +28,8 @@ class PackerResource(TillerResource):
         self.validate_tiller_config()
         self._staged = all([self._config_valid, self._packer_file])
         
-        logging.debug("Staging: self._packer_file: {}".format(
-                                                            self._packer_file))
-        logging.debug("Staging: self._config_valid: {}".format(
-                                                            self._config_valid))
+        logging.debug("Staging: self._packer_file: {}".format(self._packer_file))
+        logging.debug("Staging: self._config_valid: {}".format(self._config_valid))
         logging.debug("Staging: self._staged: {}".format(self._staged))
 
         return self._staged
@@ -43,30 +42,43 @@ class PackerResource(TillerResource):
             logging.debug("self._staged after staging attempt: {}".format(
                                                                 self._staged))
         if not self._staged:
-            raisetl.TillerException("Unable to build - environment not staged.")
+            raise tl.TillerException("Unable to build - environment not staged.")
 
         logging.debug("args {}".format(args))
         logging.debug("kwargs {}".format(kwargs))
         logging.debug("Trying to build {}".format(
             os.path.join(self.path, self._packer_file)))
         try:
-            build_proc = subprocess.Popen(
-                  ['packer','build','-machine-readable',self._packer_file], 
-                  cwd = self.path, 
-                  env = os.environ,
-                  stdout = subprocess.PIPE,
-                  stderr = subprocess.STDOUT
-            )
+            cmd = "packer build".split() + self._global_packer_args + [self._packer_file]
+            logging.debug(cmd)
+            print "Running Packer Build"
+            # Upgrade noisiness temporarily so we can see packer output
+            oldLogLevel = logging.getLogger().level
+            if oldLogLevel > logging.INFO:
+                logging.getLogger().setLevel(logging.INFO)
+            build_proc = subprocess.Popen(cmd,
+                                          cwd = self.path, 
+                                          env = os.environ,
+                                          stdout = subprocess.PIPE,
+                                          stderr = subprocess.STDOUT)
 
             # send most important messages to info log. Everything else to debug
-            for line in iter(build_proc.stdout.readline, ""):
-                mtype = line.split(',')[3]
-                if mtype == 'say':
-                    logging.info(line)
-                elif mtype == 'error':
-                    logging.error(line)
-                else:
-                    logging.debug(line)
+            with open(os.path.join(self.path, self.name + '.out'), 'w') as f:
+                for line in iter(build_proc.stdout.readline, ""):
+                    output = line.split(',')
+                    mtype = output[3]
+                    mtime = output[0]
+                    message = output[4].rstrip('\n')
+                    message = message.replace('%!(PACKER_COMMA)', ',')
+                    if mtype == 'say':
+                        logging.info('[{}] {}'.format(mtime, message))
+                    elif mtype == 'error':
+                        logging.error('[{}] {}'.format(mtime, message))
+                    else:
+                        logging.debug('[{}] {}'.format(mtime, message))
+
+                    f.write(line)
+
 
             build_proc.stdout.close()
             build_proc.wait()
@@ -75,8 +87,7 @@ class PackerResource(TillerResource):
             logging.debug("Packer build return code: {}".format(build_return))
             if build_return != 0:
                 logging.error("Could not build {} ({}). See output for "
-                              "details.".format('/'.join([self.namespace, 
-                                                self.name]), self._packer_file))
+                              "details.".format('/'.join([self.namespace, self.name]), self._packer_file))
                 logging.debug("{} not deleted".format(self._packer_file))
             else:
                 logging.info("Resource {} successfully built".format(
@@ -85,7 +96,8 @@ class PackerResource(TillerResource):
                 self.cleanup()
         except Exception as e:
             logging.error("Error while building packer file: {}".format(e))
-        
+        finally:
+            logging.getLogger().setLevel(oldLogLevel)
 
     @tl.logged(logging.DEBUG)
     def validate_tiller_config(self):
@@ -179,10 +191,16 @@ class PackerResource(TillerResource):
     @tl.logged(logging.DEBUG)
     def plan(self):
         # TODO: implement PackerResource.plan()
+        self.show()
+        pass
+
+    def show(self):
+        # TODO: packer inspect packerfile.json
         pass
 
     @tl.logged(logging.DEBUG)
     def cleanup(self):
+        logging.debug("Cleaning up...")
         try:
             os.remove(self._packer_file)
         except OSError:

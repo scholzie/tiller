@@ -14,6 +14,10 @@ class TillerResource(object):
         self.name = name
         self.path = path
         self.namespace = path.split('/')[1]
+        self.environment = kwargs.get('environment')
+        if self.environment:
+          # remove all whitespace
+          self.environment = ''.join(self.environment.split())
         self.description = kwargs.get('description')
         self.long_description = kwargs.get('long_description')
         self.depends_on = kwargs.get('depends_on')
@@ -73,6 +77,9 @@ class TillerResource(object):
                    configuration.pop('path'),
                    **configuration)
 
+    def setEnvironment(self, env):
+      # remove whitespace
+      self.environment = ''.join(env.split())
 
     def validate_tiller_config(self):
         if all([os.path.exists(self.path), self.name, self.namespace]):

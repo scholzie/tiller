@@ -22,6 +22,9 @@ Options:
     --var=<key=value>  key/value pairs to write to configuration
     -h --help          show this screen and exit
     -E ENV, --env=env  target environment
+    --alternate-state-key=KEY   specify an alternate terraform state-key
+                                (This is useful if you already have an 
+                                environment built under a different key name)
     -v --verbose       be noisy
     -D --debug         be really noisy
     --force            don't ask, just do - USE AT YOUR OWN RISK!
@@ -95,8 +98,14 @@ def resource_by_name(resource_name):
 #         r = PackerResource.from_config(config)
 #     else:
 #         r = TillerResource.from_config(config)
-
-    return list_resources()[resource_name]
+    try:
+        return list_resources()[resource_name]
+    except KeyError:
+        logging.error("No resource named {}".format(resource_name))
+        exit(1)
+    except:
+        logging.error(e)
+        raise
 
 
 @tl.logged(logging.DEBUG)
@@ -125,7 +134,7 @@ def describe(resource_name):
 
 
 @tl.logged(logging.DEBUG)
-def parse_runtime_args(args):
+def parse_runtime_vars(args):
     """
         Given a list of key=value, return a dict
         Validate given list
@@ -141,22 +150,49 @@ def main(args):
     else:
         logging.basicConfig(level=logging.ERROR)
 
+    if args['--env']:
+        env = ''.join(args['--env'].split())
+    else:
+        env = None
+
+    if args['--var']:
+        runtime_vars = parse_runtime_vars(args['--var'])
+    else:
+        runtime_vars = {}
+
+    if args['--alternate-state-key']:
+        runtime_vars['alternate_state_key'] = args['--alternate-state-key']
+
     if args['plan']:
         # TODO: Implement 'plan'
         logging.info("Planning for {}".format(args['<resource>']))
-        plan_args = parse_runtime_args(args['--var'])
-
-        res = list_resources()
-        r = res[args['<resource>']]
-        r.plan()
+        r = resource_by_name(args['<resource>'])
+        r.environment = env if env else None
+        # TODO: the following pattern is used multiple times. 
+        # Consider using a function to wrap it.
+        try:
+            r.plan(**runtime_vars)
+        except tl.TillerException as te:
+            logging.error(te)
+            print te[1]
+        except Exception as e:
+            logging.error(e)
+            raise
 
     elif args['build']:
         # TODO: finish 'build'
         logging.info("Building {}".format(args['<resource>']))
-        build_args = parse_runtime_args(args['--var'])
-        logging.debug("build_args: {}".format(build_args))
+        logging.debug("build_args: {}".format(runtime_vars))
         r = resource_by_name(args['<resource>'])
-        r.build(**build_args)
+        r.environment = env if env else None
+        try:
+            r.build(**runtime_vars)
+        except tl.TillerException as te:
+            logging.error(te)
+            print te[1]
+        except Exception as e:
+            logging.error(e)
+            raise
 
     elif args['show']:
         # TODO: Implement 'show'
@@ -185,8 +221,7 @@ def main(args):
                 print('\t{:<16}\t{} (depends on {})'.format(*['/'.join(
                 [r.namespace,r.name]), r.description, ', '.join(r.depends_on)]))
             else:
-                print('\t{:<16}\t{}'.format(*['/'.join([r.namespace,r.name]), 
-                                            r.description]))
+                print('\t{:<16}\t{}'.format(*['/'.join([r.namespace,r.name]), r.description]))
 
 
         print('\nFor more information see: ./tiller.py describe <resource>')
@@ -196,7 +231,16 @@ def main(args):
         logging.info("REMINDER: This will leave things in a potentially unclean"
                      " state. Recommended that you clean up afterwards.")
         r = resource_by_name(args['<resource>'])
-        r.stage(**parse_runtime_args(args['--var']))
+        r.environment = env if env else None
+        try:
+            if r.stage(**runtime_vars):
+                logging.info("Successfully staged {}".format(r.name))
+        except tl.TillerException as te:
+            logging.error(te)
+            print te[1]
+        except Exception as e:
+            logging.error(e)
+            raise
 
 
 if __name__ == '__main__':
