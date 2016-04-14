@@ -136,7 +136,7 @@ class TerraformResource(TillerResource):
     def build(self, *args, **kwargs):
 
         logging.debug("args {}".format(args))
-        logging.debug("kwargs {}".format(args))
+        logging.debug("kwargs {}".format(kwargs))
 
         try:
             self.check_stage(*args, **kwargs)
@@ -165,6 +165,25 @@ class TerraformResource(TillerResource):
         finally:
             self.cleanup()
 
-    def destroy(self):
-        # TODO: implement TerraformResource.destroy()
-        pass
+    def destroy(self, *args, **kwargs):
+        # TODO: Handle force flag correctly.
+        logging.debug("args {}".format(args))
+        logging.debug("kwargs {}".format(kwargs))
+
+        try:
+            self.check_stage(*args, **kwargs)
+
+            cmd = "terraform destroy".split()
+            args = self._global_terraform_args
+            args += ['-var', 'environment_name={}'.format(self.environment)]
+            if kwargs.get('force'):
+                args += ['-force']
+            oldLogLevel = logging.getLogger().level
+            if oldLogLevel > logging.INFO:
+                logging.getLogger().setLevel(logging.INFO)
+            tl.run(cmd, args, self.path)
+            logging.getLogger().setLevel(oldLogLevel)
+        except Exception as e:
+            logging.error("Error while destroying: {}".format(e))
+        finally:
+            self.cleanup()
