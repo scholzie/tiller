@@ -14,7 +14,7 @@
 [[ $DEBUG ]] && set -x
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-TF_DIR="${SCRIPT_DIR}/terraform"
+TF_DIR="${SCRIPT_DIR}/resources/terraform"
 
 # Hardcode exclusions
 EXCLUDE=(modules templates)
@@ -34,7 +34,7 @@ popd > /dev/null
 HELP=("help" "-h" "--help" "-?")
 
 function help {
-    echo "USAGE: ${0} <action> <environment> <build option>"
+    echo "USAGE: ${0} <action> <environment> <build option> <namespace key>"
     echo "Valid build options are: ${ROLES[*]}"
     exit 1
 }
@@ -62,7 +62,7 @@ check_element_exists "$1" "${HELP[@]}"
 if [[ "${1}test" == "test" ]]; then
     help
 fi
-if [[ "$#" != "3" ]]; then
+if [[ $# -gt 4 ]]; then
     help
 fi
 check_element_exists "$3" "${ROLES[@]}"
@@ -71,10 +71,10 @@ if [ $? -ne 0 ]; then
     help
 fi
 
-
 ACTION="$1"
 ENVIRONMENT="$2"
 ROLE="$3"
+NAMESPACE_KEY="$4"
 
 TFVARS="${TF_DIR}/${ROLE}/terraform.tfvars"
 # Get the bucket name from the TFVARs file
@@ -86,10 +86,21 @@ else
     BUCKET=$(get_variable $BUCKET)
 fi
 STATE_DIR=$(grep tf_state_bucket_prefix $TFVARS 2>/dev/null)
+
+
+# Set terraform remote config:
+# FIXME: (0) State file correctly tagged, but future runs with different environment names affect previous environments. Not sure why...
+TF_REMOTE_STATE_KEY="${ROLE}_${ENVIRONMENT}"
+if [[ $NAMESPACE_KEY ]]; then
+  TF_REMOTE_STATE_KEY="${ROLE}_${ENVIRONMENT}_${NAMESPACE_KEY}"
+fi
+
+
 if [[ "$?" == 0 ]]; then
     TF_REMOTE_STATE_KEY="${TF_REMOTE_STATE_KEY}/$(get_variable "$STATE_DIR")"
 fi
 [[ $DEBUG ]] && echo "DEBUG: Storing remote state in ${BUCKET}:${TF_REMOTE_STATE_KEY}..."
+
 
 
 # TODO: Make this a little nicer, if you feel like it.
@@ -127,15 +138,13 @@ set -ex
 pushd "${TF_DIR}/${ROLE}" > /dev/null
 
 [[ $DEBUG ]] && echo "\tAWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID\n\tAWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY\n\tAWS_DEFAULT_REGION: $AWS_DEFAULT_REGION"
-# Set terraform remote config:
-# FIXME: (0) State file correctly tagged, but future runs with different environment names affect previous environments. Not sure why...
-TF_REMOTE_STATE_KEY="${ROLE}_${ENVIRONMENT}"
+
 
 # Remove any traces of local tfstate files. I think those are screwing up
 # cross-environment builds
 if [[ -f ".terraform/terraform.tfstate" ]]; then
     echo "=== Moving .terraform/*.tfstate* to .terraform/ba-backup/ ==="
-    mkdir -p ./terraform/ba-backup
+    mkdir -p ./.terraform/ba-backup
     mv .terraform/*.tfstate* .terraform/ba-backup/
 fi
 
@@ -152,7 +161,11 @@ set -e
 
 # Backup tfstate for versioning here, just in case the world blows up
 echo "=== Backing up state to cloud storage (just in case) ==="
-aws s3 cp .terraform/terraform.tfstate "s3://${BUCKET}/tfstate/${ENVIRONMENT}/${ROLE}/terraform.${USER}.tfstate" 
+if [[ $NAMESPACE_KEY ]]; then
+  aws s3 cp .terraform/terraform.tfstate "s3://${BUCKET}/tfstate/${ENVIRONMENT}/${ROLE}_${NAMESPACE_KEY}/terraform.${USER}.tfstate" 
+else
+  aws s3 cp .terraform/terraform.tfstate "s3://${BUCKET}/tfstate/${ENVIRONMENT}/${ROLE}/terraform.${USER}.tfstate" 
+fi
 
 # remove all state files
 echo "=== Deleting local terraform.tfstate files ==="
