@@ -143,22 +143,24 @@ def parse_runtime_vars(args):
 
 def main(args):
 
+    runtime_vars = dict()
+
     if args['--debug']:
         logging.basicConfig(level=logging.DEBUG)
+        runtime_vars['debug'] = True
     elif args['--verbose']:
         logging.basicConfig(level=logging.INFO)
+        runtime_vars['verbose'] = True
     else:
         logging.basicConfig(level=logging.ERROR)
 
     if args['--env']:
-        env = ''.join(args['--env'].split())
+        env = ''.join(args['--env'].split()) # nowhitespaceplease
     else:
         env = None
 
     if args['--var']:
         runtime_vars = parse_runtime_vars(args['--var'])
-    else:
-        runtime_vars = {}
 
     if args['--alternate-state-key']:
         runtime_vars['alternate_state_key'] = args['--alternate-state-key']

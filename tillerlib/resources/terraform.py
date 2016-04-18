@@ -60,7 +60,9 @@ class TerraformResource(TillerResource):
                 '-backend-config=bucket=%s' % bucket,
                 '-backend-config=key=%s' % state_key]
         logging.debug("Executing %r in %s" % (cmd + args, self.path))
-        return True if tl.run(cmd, args, self.path) == 0 else False
+        return True if tl.run(cmd, args, self.path,
+                   log_only = any([kwargs.get('verbose'), 
+                                  kwargs.get('debug')])) == 0 else False
 
     def pull_remote_state(self):
         return tl.run('terraform remote pull'.split(), cwd=self.path)
@@ -74,7 +76,8 @@ class TerraformResource(TillerResource):
                 raise tl.TillerException("Mandatory environment name is not set.")
 
             try:
-                tl.run('terraform get'.split(), cwd=self.path)
+                tl.run('terraform get'.split(), cwd=self.path,
+                   log_only = any([kwargs.get('verbose'), kwargs.get('debug')]))
             except Exception as e:
                 logging.error("Encountered error while tryiing 'terraform get': %s" % e)
 
@@ -121,11 +124,8 @@ class TerraformResource(TillerResource):
             cmd = "terraform plan".split()
             args = self._global_terraform_args
             args += ['-var', 'environment_name={}'.format(self.environment)]
-            oldLogLevel = logging.getLogger().level
-            if oldLogLevel > logging.INFO:
-                logging.getLogger().setLevel(logging.INFO)
-            tl.run(cmd, args, self.path)
-            logging.getLogger().setLevel(oldLogLevel)
+            tl.run(cmd, args, self.path,
+                   log_only = any([kwargs.get('verbose'), kwargs.get('debug')]))
         except Exception as e:
             logging.error("Error while planning: {}", e)
         finally:
@@ -144,11 +144,8 @@ class TerraformResource(TillerResource):
             cmd = "terraform apply".split()
             args = self._global_terraform_args
             args += ['-var', 'environment_name={}'.format(self.environment)]
-            oldLogLevel = logging.getLogger().level
-            if oldLogLevel > logging.INFO:
-                logging.getLogger().setLevel(logging.INFO)
-            tl.run(cmd, args, self.path)
-            logging.getLogger().setLevel(oldLogLevel)
+            tl.run(cmd, args, self.path, 
+                   log_only=any([kwargs.get('verbose'), kwargs.get('debug')]))
         except Exception as e:
             logging.error("Error while building: {}".format(e))
         finally:
@@ -178,11 +175,8 @@ class TerraformResource(TillerResource):
             args += ['-var', 'environment_name={}'.format(self.environment)]
             if kwargs.get('force'):
                 args += ['-force']
-            oldLogLevel = logging.getLogger().level
-            if oldLogLevel > logging.INFO:
-                logging.getLogger().setLevel(logging.INFO)
-            tl.run(cmd, args, self.path)
-            logging.getLogger().setLevel(oldLogLevel)
+            tl.run(cmd, args, self.path,
+                   log_only = any([kwargs.get('verbose'), kwargs.get('debug')]))
         except Exception as e:
             logging.error("Error while destroying: {}".format(e))
         finally:

@@ -115,7 +115,7 @@ class PackerResource(TillerResource):
             packer_file = self._packer_file
 
         try:
-            subprocess.check_call(['packer','validate',packer_file], 
+            subprocess.check_call(['packer','validate',packer_file],
                                   cwd=self.path)
             logging.debug("Validated Packer file successfully: {}".format(
                                                                 packer_file))
