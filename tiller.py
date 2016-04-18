@@ -163,6 +163,9 @@ def main(args):
     if args['--alternate-state-key']:
         runtime_vars['alternate_state_key'] = args['--alternate-state-key']
 
+    if args['--force']:
+        runtime_vars['force'] = args['--force']
+
     if args['plan']:
         # TODO: Implement 'plan'
         logging.info("Planning for {}".format(args['<resource>']))
@@ -210,7 +213,20 @@ def main(args):
 
     elif args['destroy']:
         # TODO: Implement 'destroy'
-        logging.info("Destroying.")
+
+        logging.info("Destroying {}".format(args['<resource>']))
+        logging.debug("destroy_args: {}".format(runtime_vars))
+        r = resource_by_name(args['<resource>'])
+        r.environment = env if env else None
+        try:
+            r.destroy(**runtime_vars)
+        except tl.TillerException as te:
+            logging.error(te)
+            print te[1]
+        except Exception as e:
+            logging.error(e)
+            raise
+
 
     elif args['list']:
         logging.info("Listing resources.")
