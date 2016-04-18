@@ -34,7 +34,7 @@ popd > /dev/null
 HELP=("help" "-h" "--help" "-?")
 
 function help {
-    echo "USAGE: ${0} <action> <environment> <build option> <namespace key>"
+    echo "USAGE: ${0} <action> <environment> <build option> <tfstate identifier key>"
     echo "Valid build options are: ${ROLES[*]}"
     exit 1
 }
@@ -74,7 +74,7 @@ fi
 ACTION="$1"
 ENVIRONMENT="$2"
 ROLE="$3"
-NAMESPACE_KEY="$4"
+TFSTATE_IDENTIFER_KEY="$4"
 
 TFVARS="${TF_DIR}/${ROLE}/terraform.tfvars"
 # Get the bucket name from the TFVARs file
@@ -91,8 +91,8 @@ STATE_DIR=$(grep tf_state_bucket_prefix $TFVARS 2>/dev/null)
 # Set terraform remote config:
 # FIXME: (0) State file correctly tagged, but future runs with different environment names affect previous environments. Not sure why...
 TF_REMOTE_STATE_KEY="${ROLE}_${ENVIRONMENT}"
-if [[ $NAMESPACE_KEY ]]; then
-  TF_REMOTE_STATE_KEY="${ROLE}_${ENVIRONMENT}_${NAMESPACE_KEY}"
+if [[ $TFSTATE_IDENTIFER_KEY ]]; then
+  TF_REMOTE_STATE_KEY="${ROLE}_${ENVIRONMENT}_${TFSTATE_IDENTIFER_KEY}"
 fi
 
 
@@ -161,8 +161,8 @@ set -e
 
 # Backup tfstate for versioning here, just in case the world blows up
 echo "=== Backing up state to cloud storage (just in case) ==="
-if [[ $NAMESPACE_KEY ]]; then
-  aws s3 cp .terraform/terraform.tfstate "s3://${BUCKET}/tfstate/${ENVIRONMENT}/${ROLE}_${NAMESPACE_KEY}/terraform.${USER}.tfstate" 
+if [[ $TFSTATE_IDENTIFER_KEY ]]; then
+  aws s3 cp .terraform/terraform.tfstate "s3://${BUCKET}/tfstate/${ENVIRONMENT}/${ROLE}_${TFSTATE_IDENTIFER_KEY}/terraform.${USER}.tfstate" 
 else
   aws s3 cp .terraform/terraform.tfstate "s3://${BUCKET}/tfstate/${ENVIRONMENT}/${ROLE}/terraform.${USER}.tfstate" 
 fi
