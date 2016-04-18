@@ -62,7 +62,7 @@ check_element_exists "$1" "${HELP[@]}"
 if [[ "${1}test" == "test" ]]; then
     help
 fi
-if [[ $# -gt 4 ]]; then
+if [[ $# -gt 4 ]] || [[ $# -lt 3 ]]; then
     help
 fi
 check_element_exists "$3" "${ROLES[@]}"
