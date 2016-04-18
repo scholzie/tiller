@@ -97,10 +97,20 @@ class TerraformResource(TillerResource):
         return self._staged
 
 
-    def validate(self):
-        return True
+    def validate(self, *args, **kwargs):
+        logging.debug("args {}".format(args))
+        logging.debug("kwargs {}".format(kwargs))
 
-    @tl.logged(logging.DEBUG)    
+        try:
+            cmd = "terraform validate".split()
+            args = self._global_terraform_args
+            return True if tl.run(cmd, args, self.path,
+                   log_only = any([kwargs.get('verbose'), kwargs.get('debug')])) == 0 else False
+        except Exception as e:
+            logging.error("Terraform validation error: {}".format(e))
+
+
+    @tl.logged(logging.DEBUG)
     def check_stage(self, *args, **kwargs):
         if not self._staged:
             logging.debug("Environment not staged - attempting to stage")
@@ -117,7 +127,7 @@ class TerraformResource(TillerResource):
 
         logging.debug("args {}".format(args))
         logging.debug("kwargs {}".format(kwargs))
-
+        logging.debug("Depends on: {}".format(self.depends_on))
         try:
             self.check_stage(*args, **kwargs)
 
@@ -127,9 +137,27 @@ class TerraformResource(TillerResource):
             tl.run(cmd, args, self.path,
                    log_only = any([kwargs.get('verbose'), kwargs.get('debug')]))
         except Exception as e:
-            logging.error("Error while planning: {}", e)
+            logging.error("Error while planning: {}".format(e))
         finally:
             self.cleanup()
+
+    @tl.logged
+    def exists_as_described(self, *args, **kwargs):
+        """Returns True if a terraform plan step reports that NO changes would
+        be made. Else, False"""
+        exit_code = tl.run('terraform plan'.split(),
+                           self._global_terraform_args,
+                           self.path,
+                           log_only = True)
+        if exit_code == 0:
+            logging.debug("No changes required.")
+            return True
+        elif exit_code == 2:
+            logging.debug("Changes required.")
+            return False
+        else:
+            raise tl.TillerException("Terraform plan threw an error. "
+                                     "Please run a full plan step to get more information.")
 
 
     @tl.logged(logging.DEBUG)
@@ -144,7 +172,7 @@ class TerraformResource(TillerResource):
             cmd = "terraform apply".split()
             args = self._global_terraform_args
             args += ['-var', 'environment_name={}'.format(self.environment)]
-            tl.run(cmd, args, self.path, 
+            tl.run(cmd, args, self.path,
                    log_only=any([kwargs.get('verbose'), kwargs.get('debug')]))
         except Exception as e:
             logging.error("Error while building: {}".format(e))

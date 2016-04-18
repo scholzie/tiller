@@ -182,7 +182,6 @@ class PackerResource(TillerResource):
         # Packer validate, return None if fail, else return the fname of the 
         # finished file
         _out_file = os.path.abspath(_file.rstrip(self._tiller_extention))
-        # _out_file = os.path.basename(_file.rstrip(self._tiller_extention))
         logging.debug("Wrote file: {}".format(_out_file))
 
         # return file name if valid or None

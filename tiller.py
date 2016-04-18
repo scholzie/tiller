@@ -23,7 +23,7 @@ Options:
     -h --help          show this screen and exit
     -E ENV, --env=env  target environment
     --alternate-state-key=KEY   specify an alternate terraform state-key
-                                (This is useful if you already have an 
+                                (This is useful if you already have an
                                 environment built under a different key name)
     -v --verbose       be noisy
     -D --debug         be really noisy
@@ -63,7 +63,7 @@ def list_resources():
                     r = PackerResource.from_config(os.path.join(root,f))
                 else:
                     r = TillerResource.from_config(os.path.join(root, f))
-                # Create a new entry in resource{} with the name of the 
+                # Create a new entry in resource{} with the name of the
                 # resource as the value
                 if r:
                     rkey = '{}/{}'.format(r.namespace, r.name)
@@ -92,18 +92,12 @@ def resource_by_name(resource_name):
                     resource,
                     namespace,
                     config))
-#     if namespace == 'terraform':
-#         r = TerraformResource.from_config(config)
-#     elif namespace == 'packer':
-#         r = PackerResource.from_config(config)
-#     else:
-#         r = TillerResource.from_config(config)
     try:
         return list_resources()[resource_name]
     except KeyError:
         logging.error("No resource named {}".format(resource_name))
         exit(1)
-    except:
+    except Exception as e:
         logging.error(e)
         raise
 
@@ -136,8 +130,7 @@ def describe(resource_name):
 @tl.logged(logging.DEBUG)
 def parse_runtime_vars(args):
     """
-        Given a list of key=value, return a dict
-        Validate given list
+        Given a list of key=value, return a dict of those values
     """
     return dict(kv.split('=') for kv in args)
 
