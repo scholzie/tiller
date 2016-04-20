@@ -14,6 +14,7 @@ class TerraformResource(TillerResource):
         self.path = path
         self.tf_state_key = None
         self._global_terraform_args = '-no-color'.split()
+        self._plan_args = "-detailed-exitcode".split()
 
 
     def setEnvironment(self, env):
@@ -35,6 +36,10 @@ class TerraformResource(TillerResource):
         pass
 
     @tl.logged(logging.DEBUG)
+    # TODO: if config.tiller has a state_key_ext or state_key_var field, add the ext (literal string)
+    # or var (interpolated, whitespace-stripped variable) to the state_key. This ensures that 
+    # resources which are identical other than their name will not share the same statefile. This is 
+    # particularly an issue for ECS clusters which should not share AWS resources
     def setup_remote_state(self, bucket, state_key, *args, **kwargs):
         """Set the remote state key. On success, returns True, else False."""
         tf_dot_dir = os.path.join(self.path, '.terraform')
@@ -60,7 +65,8 @@ class TerraformResource(TillerResource):
                 '-backend-config=bucket=%s' % bucket,
                 '-backend-config=key=%s' % state_key]
         logging.debug("Executing %r in %s" % (cmd + args, self.path))
-        return True if tl.run(cmd, args, self.path) == 0 else False
+        return True if tl.run(cmd, args, self.path,
+                   log_only = True) == 0 else False
 
     def pull_remote_state(self):
         return tl.run('terraform remote pull'.split(), cwd=self.path)
@@ -71,10 +77,11 @@ class TerraformResource(TillerResource):
         if not self._staged:
             logging.debug("Environment not staged. Attempting to stage.")
             if not self.environment:
-                raise tl.TillerException("Mandatory environment name is not set.")
+                raise tl.TillerException("Mandatory environment name for {} is not set.".format(self))
 
             try:
-                tl.run('terraform get'.split(), cwd=self.path)
+                tl.run('terraform get'.split(), cwd=self.path,
+                   log_only = True )
             except Exception as e:
                 logging.error("Encountered error while tryiing 'terraform get': %s" % e)
 
@@ -94,10 +101,20 @@ class TerraformResource(TillerResource):
         return self._staged
 
 
-    def validate(self):
-        return True
+    def validate(self, *args, **kwargs):
+        logging.debug("args {}".format(args))
+        logging.debug("kwargs {}".format(kwargs))
 
-    @tl.logged(logging.DEBUG)    
+        try:
+            cmd = "terraform validate".split()
+            args = self._global_terraform_args
+            return True if tl.run(cmd, args, self.path,
+                   log_only = any([kwargs.get('verbose'), kwargs.get('debug')])) == 0 else False
+        except Exception as e:
+            logging.error("Terraform validation error: {}".format(e))
+
+
+    @tl.logged(logging.DEBUG)
     def check_stage(self, *args, **kwargs):
         if not self._staged:
             logging.debug("Environment not staged - attempting to stage")
@@ -110,26 +127,38 @@ class TerraformResource(TillerResource):
 
 
     @tl.logged(logging.DEBUG)
-    def plan(self, *args, **kwargs):
+    def plan(self, output=True, *args, **kwargs):
+        """Plan a terraform run. If output=True, print (or log) the output. In any case,
+        return True True if a plan will require changes, or False if the infrastructure
+        already exists as described."""
 
         logging.debug("args {}".format(args))
         logging.debug("kwargs {}".format(kwargs))
-
+        logging.debug("Depends on: {}".format(self.depends_on))
         try:
             self.check_stage(*args, **kwargs)
 
             cmd = "terraform plan".split()
             args = self._global_terraform_args
+            args += self._plan_args
             args += ['-var', 'environment_name={}'.format(self.environment)]
-            oldLogLevel = logging.getLogger().level
-            if oldLogLevel > logging.INFO:
-                logging.getLogger().setLevel(logging.INFO)
-            tl.run(cmd, args, self.path)
-            logging.getLogger().setLevel(oldLogLevel)
+            log_only = True if not output else any([kwargs.get('verbose'), kwargs.get('debug')])
+            exit = tl.run(cmd, args, self.path,
+                   log_only = log_only)
+            if exit == 0:
+                logging.info("No changes required.")
+                return True
+            elif exit == 2:
+                logging.info("Changes required.")
+                return False
+            else:
+                raise tl.TillerException("Terraform plan threw an error. "
+                                         "See outout for more details (try re-running with --verbose or --debug)")
         except Exception as e:
-            logging.error("Error while planning: {}", e)
+            logging.error("Error while planning: {}".format(e))
         finally:
             self.cleanup()
+
 
 
     @tl.logged(logging.DEBUG)
@@ -144,11 +173,7 @@ class TerraformResource(TillerResource):
             cmd = "terraform apply".split()
             args = self._global_terraform_args
             args += ['-var', 'environment_name={}'.format(self.environment)]
-            oldLogLevel = logging.getLogger().level
-            if oldLogLevel > logging.INFO:
-                logging.getLogger().setLevel(logging.INFO)
-            tl.run(cmd, args, self.path)
-            logging.getLogger().setLevel(oldLogLevel)
+            tl.run(cmd, args, self.path, log_only=any([kwargs.get('verbose'), kwargs.get('debug')]))
         except Exception as e:
             logging.error("Error while building: {}".format(e))
         finally:
@@ -178,11 +203,8 @@ class TerraformResource(TillerResource):
             args += ['-var', 'environment_name={}'.format(self.environment)]
             if kwargs.get('force'):
                 args += ['-force']
-            oldLogLevel = logging.getLogger().level
-            if oldLogLevel > logging.INFO:
-                logging.getLogger().setLevel(logging.INFO)
-            tl.run(cmd, args, self.path)
-            logging.getLogger().setLevel(oldLogLevel)
+            tl.run(cmd, args, self.path,
+                   log_only = any([kwargs.get('verbose'), kwargs.get('debug')]))
         except Exception as e:
             logging.error("Error while destroying: {}".format(e))
         finally:

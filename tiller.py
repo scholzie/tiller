@@ -23,7 +23,7 @@ Options:
     -h --help          show this screen and exit
     -E ENV, --env=env  target environment
     --alternate-state-key=KEY   specify an alternate terraform state-key
-                                (This is useful if you already have an 
+                                (This is useful if you already have an
                                 environment built under a different key name)
     -v --verbose       be noisy
     -D --debug         be really noisy
@@ -63,7 +63,7 @@ def list_resources():
                     r = PackerResource.from_config(os.path.join(root,f))
                 else:
                     r = TillerResource.from_config(os.path.join(root, f))
-                # Create a new entry in resource{} with the name of the 
+                # Create a new entry in resource{} with the name of the
                 # resource as the value
                 if r:
                     rkey = '{}/{}'.format(r.namespace, r.name)
@@ -81,29 +81,23 @@ def list_resources():
 # the sake of compatability with the future intent of this function's use.
 def resource_by_name(resource_name):
     """return a named resource (namespace/name)"""
-    path = os.path.join('resources', os.path.dirname(resource_name))
-    resource = os.path.basename(resource_name)
-    namespace = path.split('/')[1]
-    config = os.path.join(path, "config.tiller")
-    logging.debug('resource_name: {}, path: {}, resource_name: {}, '
-                  'namespace: {}, config file: {}'.format(
-                    resource_name,
-                    path,
-                    resource,
-                    namespace,
-                    config))
-#     if namespace == 'terraform':
-#         r = TerraformResource.from_config(config)
-#     elif namespace == 'packer':
-#         r = PackerResource.from_config(config)
-#     else:
-#         r = TillerResource.from_config(config)
+    # path = os.path.join('resources', os.path.dirname(resource_name))
+    # resource = os.path.basename(resource_name)
+    # namespace = path.split('/')[1]
+    # config = os.path.join(path, "config.tiller")
+    # logging.debug('resource_name: {}, path: {}, resource_name: {}, '
+    #               'namespace: {}, config file: {}'.format(
+    #                 resource_name,
+    #                 path,
+    #                 resource,
+    #                 namespace,
+    #                 config))
     try:
         return list_resources()[resource_name]
     except KeyError:
         logging.error("No resource named {}".format(resource_name))
         exit(1)
-    except:
+    except Exception as e:
         logging.error(e)
         raise
 
@@ -136,29 +130,57 @@ def describe(resource_name):
 @tl.logged(logging.DEBUG)
 def parse_runtime_vars(args):
     """
-        Given a list of key=value, return a dict
-        Validate given list
+        Given a list of key=value, return a dict of those values
     """
     return dict(kv.split('=') for kv in args)
 
+@tl.logged(logging.DEBUG)
+def check_deps(resource, **kwargs):
+    """Check a resource and return the number out outstanding dependencies"""
+
+    # TODO: update check_deps to wrap a build/plan/etc function to check deps 
+    # before doing anythingm, then just run it. This removes the need to use 
+    # the same patten in each step in main()
+
+    print "Checking dependencies for {}...".format(resource)
+    deps_outstanding = 0
+    try:
+        for dep in resource.depends_on:
+            print "Processing dependency {}".format(dep)
+            dep_r = resource_by_name(dep)
+            dep_r.environment = resource.environment
+            logging.debug("Planning kwargs: {}".format(kwargs))
+            if dep_r.plan(output=False, **kwargs):
+                print "{} exists. Continuing.".format(dep)
+            else:
+                print "{}::{} does not yet exist. Please build it first.".format(dep_r.environment, dep)
+                deps_outstanding += 1
+    except Exception as e:
+        logging.error("Error while checking dependencies: {}".format(e))
+    
+    return deps_outstanding
+
+
 def main(args):
+
+    runtime_vars = dict()
 
     if args['--debug']:
         logging.basicConfig(level=logging.DEBUG)
+        runtime_vars['debug'] = True
     elif args['--verbose']:
         logging.basicConfig(level=logging.INFO)
+        runtime_vars['verbose'] = True
     else:
         logging.basicConfig(level=logging.ERROR)
 
     if args['--env']:
-        env = ''.join(args['--env'].split())
+        env = ''.join(args['--env'].split()) # nowhitespaceplease
     else:
         env = None
 
     if args['--var']:
         runtime_vars = parse_runtime_vars(args['--var'])
-    else:
-        runtime_vars = {}
 
     if args['--alternate-state-key']:
         runtime_vars['alternate_state_key'] = args['--alternate-state-key']
@@ -168,13 +190,17 @@ def main(args):
 
     if args['plan']:
         # TODO: Implement 'plan'
-        logging.info("Planning for {}".format(args['<resource>']))
-        r = resource_by_name(args['<resource>'])
-        r.environment = env if env else None
-        # TODO: the following pattern is used multiple times. 
+        print "Planning {}...".format(args['<resource>'])
+        # TODO: the following pattern is used multiple times.
         # Consider using a function to wrap it.
         try:
-            r.plan(**runtime_vars)
+            r = resource_by_name(args['<resource>'])
+            r.environment = env if env else None
+            deps = check_deps(r, **runtime_vars)
+            if deps == 0:
+                r.plan(**runtime_vars)
+            else:
+                print ("There are {} dependencies outstanding. Will not continue planning of {}/{}. Please check output above for details.".format(deps, r.namespace, r.name))
         except tl.TillerException as te:
             logging.error(te)
             print te[1]
@@ -184,12 +210,16 @@ def main(args):
 
     elif args['build']:
         # TODO: finish 'build'
-        logging.info("Building {}".format(args['<resource>']))
+        print "Building {}...".format(args['<resource>'])
         logging.debug("build_args: {}".format(runtime_vars))
-        r = resource_by_name(args['<resource>'])
-        r.environment = env if env else None
         try:
-            r.build(**runtime_vars)
+            r = resource_by_name(args['<resource>'])
+            r.environment = env if env else None
+            deps = check_deps(r, **runtime_vars)
+            if deps == 0:
+                r.build(**runtime_vars)
+            else:
+                print ("There are {} dependencies outstanding. Will not continue building {}/{}. Please check output above for details.".format(deps, r.namespace, r.name))
         except tl.TillerException as te:
             logging.error(te)
             print te[1]

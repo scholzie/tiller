@@ -76,18 +76,21 @@ def change_log_level(level, logger=None):
 #     return wrapper
 
 
-def run(cmd, args=None, cwd=None):
+def run(cmd, args=None, cwd=None, log_only=False):
     args = args if args else []
     cwd = cwd if cwd else os.path.curdir
     try:
-        logging.debug(cmd+args)
+        logging.debug("Running {} in {}".format(cmd+args, cwd))
         p = subprocess.Popen(cmd + args,
                              env=os.environ,
                              cwd=cwd,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
         for line in iter(p.stdout.readline, ''):
-            logging.info(line.rstrip('\n'))
+            if log_only:
+                logging.info(line.rstrip('\n'))
+            else:
+                print(line.rstrip('\n'))
         p.stdout.close()
         p.wait()
         logging.debug("`{}` exited with code {}".format(' '.join(cmd+args), p.returncode))
