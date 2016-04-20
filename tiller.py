@@ -138,6 +138,10 @@ def parse_runtime_vars(args):
 def check_deps(resource, **kwargs):
     """Check a resource and return the number out outstanding dependencies"""
 
+    # TODO: update check_deps to wrap a build/plan/etc function to check deps 
+    # before doing anythingm, then just run it. This removes the need to use 
+    # the same patten in each step in main()
+
     print "Checking dependencies for {}...".format(resource)
     deps_outstanding = 0
     try:
@@ -206,12 +210,16 @@ def main(args):
 
     elif args['build']:
         # TODO: finish 'build'
-        logging.info("Building {}".format(args['<resource>']))
+        print "Building {}...".format(args['<resource>'])
         logging.debug("build_args: {}".format(runtime_vars))
-        r = resource_by_name(args['<resource>'])
-        r.environment = env if env else None
         try:
-            r.build(**runtime_vars)
+            r = resource_by_name(args['<resource>'])
+            r.environment = env if env else None
+            deps = check_deps(r, **runtime_vars)
+            if deps == 0:
+                r.build(**runtime_vars)
+            else:
+                print ("There are {} dependencies outstanding. Will not continue building {}/{}. Please check output above for details.".format(deps, r.namespace, r.name))
         except tl.TillerException as te:
             logging.error(te)
             print te[1]

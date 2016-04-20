@@ -14,7 +14,6 @@ class TerraformResource(TillerResource):
         self.path = path
         self.tf_state_key = None
         self._global_terraform_args = '-no-color'.split()
-        self._build_args = "-detailed-exitcode".split()
         self._plan_args = "-detailed-exitcode".split()
 
 
@@ -37,6 +36,10 @@ class TerraformResource(TillerResource):
         pass
 
     @tl.logged(logging.DEBUG)
+    # TODO: if config.tiller has a state_key_ext or state_key_var field, add the ext (literal string)
+    # or var (interpolated, whitespace-stripped variable) to the state_key. This ensures that 
+    # resources which are identical other than their name will not share the same statefile. This is 
+    # particularly an issue for ECS clusters which should not share AWS resources
     def setup_remote_state(self, bucket, state_key, *args, **kwargs):
         """Set the remote state key. On success, returns True, else False."""
         tf_dot_dir = os.path.join(self.path, '.terraform')
@@ -169,7 +172,6 @@ class TerraformResource(TillerResource):
 
             cmd = "terraform apply".split()
             args = self._global_terraform_args
-            args += self._build_args
             args += ['-var', 'environment_name={}'.format(self.environment)]
             tl.run(cmd, args, self.path, log_only=any([kwargs.get('verbose'), kwargs.get('debug')]))
         except Exception as e:
