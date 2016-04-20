@@ -1,0 +1,19 @@
+tf_state_bucket_prefix="tfstate"
+environment_name="dev"
+instance_type="t2.micro"
+region = "us-east-1"
+
+access_key=""
+secret_key=""
+key_name=""
+azs=""
+secret_bucket= ""
+
+subnet_id=""
+
+vpc_id=""
+ami=""
+
+host_environment=""
+policy_name=""
+service_name=""
