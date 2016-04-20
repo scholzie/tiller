@@ -99,7 +99,7 @@ class TillerResource(object):
         pass
 
     def __str__(self):
-        return '{}/{}: {}'.format(self.namespace, self.name, self.path)
+        return '{}/{}'.format(self.namespace, self.name)
 
     def __bool__(self):
         return self.validate_tiller_config()

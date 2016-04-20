@@ -80,7 +80,7 @@ def run(cmd, args=None, cwd=None, log_only=False):
     args = args if args else []
     cwd = cwd if cwd else os.path.curdir
     try:
-        logging.debug(cmd+args)
+        logging.debug("Running {} in {}".format(cmd+args, cwd))
         p = subprocess.Popen(cmd + args,
                              env=os.environ,
                              cwd=cwd,

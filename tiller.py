@@ -81,17 +81,17 @@ def list_resources():
 # the sake of compatability with the future intent of this function's use.
 def resource_by_name(resource_name):
     """return a named resource (namespace/name)"""
-    path = os.path.join('resources', os.path.dirname(resource_name))
-    resource = os.path.basename(resource_name)
-    namespace = path.split('/')[1]
-    config = os.path.join(path, "config.tiller")
-    logging.debug('resource_name: {}, path: {}, resource_name: {}, '
-                  'namespace: {}, config file: {}'.format(
-                    resource_name,
-                    path,
-                    resource,
-                    namespace,
-                    config))
+    # path = os.path.join('resources', os.path.dirname(resource_name))
+    # resource = os.path.basename(resource_name)
+    # namespace = path.split('/')[1]
+    # config = os.path.join(path, "config.tiller")
+    # logging.debug('resource_name: {}, path: {}, resource_name: {}, '
+    #               'namespace: {}, config file: {}'.format(
+    #                 resource_name,
+    #                 path,
+    #                 resource,
+    #                 namespace,
+    #                 config))
     try:
         return list_resources()[resource_name]
     except KeyError:
@@ -134,6 +134,29 @@ def parse_runtime_vars(args):
     """
     return dict(kv.split('=') for kv in args)
 
+@tl.logged(logging.DEBUG)
+def check_deps(resource, **kwargs):
+    """Check a resource and return the number out outstanding dependencies"""
+
+    print "Checking dependencies for {}...".format(resource)
+    deps_outstanding = 0
+    try:
+        for dep in resource.depends_on:
+            print "Processing dependency {}".format(dep)
+            dep_r = resource_by_name(dep)
+            dep_r.environment = resource.environment
+            logging.debug("Planning kwargs: {}".format(kwargs))
+            if dep_r.plan(output=False, **kwargs):
+                print "{} exists. Continuing.".format(dep)
+            else:
+                print "{} does not yet exist. Please build it first.".format(dep)
+                deps_outstanding += 1
+    except Exception as e:
+        logging.error("Error while checking dependencies: {}".format(e))
+    
+    return deps_outstanding
+
+
 def main(args):
 
     runtime_vars = dict()
@@ -163,13 +186,17 @@ def main(args):
 
     if args['plan']:
         # TODO: Implement 'plan'
-        logging.info("Planning for {}".format(args['<resource>']))
-        r = resource_by_name(args['<resource>'])
-        r.environment = env if env else None
-        # TODO: the following pattern is used multiple times. 
+        print "Planning {}...".format(args['<resource>'])
+        # TODO: the following pattern is used multiple times.
         # Consider using a function to wrap it.
         try:
-            r.plan(**runtime_vars)
+            r = resource_by_name(args['<resource>'])
+            r.environment = env if env else None
+            deps = check_deps(r, **runtime_vars)
+            if deps == 0:
+                r.plan(**runtime_vars)
+            else:
+                print ("There are {} dependencies outstanding. Will not continue planning of {}/{}. Please check output above for details.".format(deps, r.namespace, r.name))
         except tl.TillerException as te:
             logging.error(te)
             print te[1]

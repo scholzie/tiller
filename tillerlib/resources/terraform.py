@@ -14,6 +14,8 @@ class TerraformResource(TillerResource):
         self.path = path
         self.tf_state_key = None
         self._global_terraform_args = '-no-color'.split()
+        self._build_args = "-detailed-exitcode".split()
+        self._plan_args = "-detailed-exitcode".split()
 
 
     def setEnvironment(self, env):
@@ -61,8 +63,7 @@ class TerraformResource(TillerResource):
                 '-backend-config=key=%s' % state_key]
         logging.debug("Executing %r in %s" % (cmd + args, self.path))
         return True if tl.run(cmd, args, self.path,
-                   log_only = any([kwargs.get('verbose'), 
-                                  kwargs.get('debug')])) == 0 else False
+                   log_only = True) == 0 else False
 
     def pull_remote_state(self):
         return tl.run('terraform remote pull'.split(), cwd=self.path)
@@ -73,11 +74,11 @@ class TerraformResource(TillerResource):
         if not self._staged:
             logging.debug("Environment not staged. Attempting to stage.")
             if not self.environment:
-                raise tl.TillerException("Mandatory environment name is not set.")
+                raise tl.TillerException("Mandatory environment name for {} is not set.".format(self))
 
             try:
                 tl.run('terraform get'.split(), cwd=self.path,
-                   log_only = any([kwargs.get('verbose'), kwargs.get('debug')]))
+                   log_only = True )
             except Exception as e:
                 logging.error("Encountered error while tryiing 'terraform get': %s" % e)
 
@@ -123,7 +124,10 @@ class TerraformResource(TillerResource):
 
 
     @tl.logged(logging.DEBUG)
-    def plan(self, *args, **kwargs):
+    def plan(self, output=True, *args, **kwargs):
+        """Plan a terraform run. If output=True, print (or log) the output. In any case,
+        return True True if a plan will require changes, or False if the infrastructure
+        already exists as described."""
 
         logging.debug("args {}".format(args))
         logging.debug("kwargs {}".format(kwargs))
@@ -133,31 +137,25 @@ class TerraformResource(TillerResource):
 
             cmd = "terraform plan".split()
             args = self._global_terraform_args
+            args += self._plan_args
             args += ['-var', 'environment_name={}'.format(self.environment)]
-            tl.run(cmd, args, self.path,
-                   log_only = any([kwargs.get('verbose'), kwargs.get('debug')]))
+            log_only = True if not output else any([kwargs.get('verbose'), kwargs.get('debug')])
+            exit = tl.run(cmd, args, self.path,
+                   log_only = log_only)
+            if exit == 0:
+                logging.info("No changes required.")
+                return True
+            elif exit == 2:
+                logging.info("Changes required.")
+                return False
+            else:
+                raise tl.TillerException("Terraform plan threw an error. "
+                                         "See outout for more details (try re-running with --verbose or --debug)")
         except Exception as e:
             logging.error("Error while planning: {}".format(e))
         finally:
             self.cleanup()
 
-    @tl.logged
-    def exists_as_described(self, *args, **kwargs):
-        """Returns True if a terraform plan step reports that NO changes would
-        be made. Else, False"""
-        exit_code = tl.run('terraform plan'.split(),
-                           self._global_terraform_args,
-                           self.path,
-                           log_only = True)
-        if exit_code == 0:
-            logging.debug("No changes required.")
-            return True
-        elif exit_code == 2:
-            logging.debug("Changes required.")
-            return False
-        else:
-            raise tl.TillerException("Terraform plan threw an error. "
-                                     "Please run a full plan step to get more information.")
 
 
     @tl.logged(logging.DEBUG)
@@ -171,9 +169,9 @@ class TerraformResource(TillerResource):
 
             cmd = "terraform apply".split()
             args = self._global_terraform_args
+            args += self._build_args
             args += ['-var', 'environment_name={}'.format(self.environment)]
-            tl.run(cmd, args, self.path,
-                   log_only=any([kwargs.get('verbose'), kwargs.get('debug')]))
+            tl.run(cmd, args, self.path, log_only=any([kwargs.get('verbose'), kwargs.get('debug')]))
         except Exception as e:
             logging.error("Error while building: {}".format(e))
         finally:
