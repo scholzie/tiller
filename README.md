@@ -1,4 +1,4 @@
-[tiller](http://i.imgur.com/TB3W2EU.jpg)
+![tiller](http://i.imgur.com/TB3W2EU.jpg)
 
 # Synopsis
 `tiller` is a logical progression from `poutine` - it's a python wrapper for packer and terraform which extends `poutine` to allow for resource dependencies, passing inputs to a dependant resource from the outputs of its dependencies, and extensibility by anyone who can write packer or terraform files.
