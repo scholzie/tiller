@@ -189,7 +189,7 @@ def main(args):
         runtime_vars['force'] = args['--force']
 
     if args['plan']:
-        # TODO: Implement 'plan'
+        # TODO: Finish 'plan'
         print "Planning {}...".format(args['<resource>'])
         # TODO: the following pattern is used multiple times.
         # Consider using a function to wrap it.
