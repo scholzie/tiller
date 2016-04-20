@@ -153,7 +153,7 @@ def check_deps(resource, **kwargs):
             if dep_r.plan(output=False, **kwargs):
                 print "{} exists. Continuing.".format(dep)
             else:
-                print "{} does not yet exist. Please build it first.".format(dep)
+                print "{}::{} does not yet exist. Please build it first.".format(dep_r.environment, dep)
                 deps_outstanding += 1
     except Exception as e:
         logging.error("Error while checking dependencies: {}".format(e))
