@@ -138,8 +138,8 @@ def parse_runtime_vars(args):
 def check_deps(resource, **kwargs):
     """Check a resource and return the number out outstanding dependencies"""
 
-    # TODO: update check_deps to wrap a build/plan/etc function to check deps 
-    # before doing anythingm, then just run it. This removes the need to use 
+    # TODO: update check_deps to wrap a build/plan/etc function to check deps
+    # before doing anythingm, then just run it. This removes the need to use
     # the same patten in each step in main()
 
     print "Checking dependencies for {}...".format(resource)
@@ -157,7 +157,7 @@ def check_deps(resource, **kwargs):
                 deps_outstanding += 1
     except Exception as e:
         logging.error("Error while checking dependencies: {}".format(e))
-    
+
     return deps_outstanding
 
 
@@ -202,11 +202,9 @@ def main(args):
             else:
                 print ("There are {} dependencies outstanding. Will not continue planning of {}/{}. Please check output above for details.".format(deps, r.namespace, r.name))
         except tl.TillerException as te:
-            logging.error(te)
             print te[1]
         except Exception as e:
             logging.error(e)
-            raise
 
     elif args['build']:
         # TODO: finish 'build'
@@ -221,11 +219,9 @@ def main(args):
             else:
                 print ("There are {} dependencies outstanding. Will not continue building {}/{}. Please check output above for details.".format(deps, r.namespace, r.name))
         except tl.TillerException as te:
-            logging.error(te)
             print te[1]
         except Exception as e:
             logging.error(e)
-            raise
 
     elif args['show']:
         # TODO: Implement 'show'
@@ -251,11 +247,9 @@ def main(args):
         try:
             r.destroy(**runtime_vars)
         except tl.TillerException as te:
-            logging.error(te)
             print te[1]
         except Exception as e:
             logging.error(e)
-            raise
 
 
     elif args['list']:
@@ -282,11 +276,9 @@ def main(args):
             if r.stage(**runtime_vars):
                 logging.info("Successfully staged {}".format(r.name))
         except tl.TillerException as te:
-            logging.error(te)
             print te[1]
         except Exception as e:
             logging.error(e)
-            raise
 
 
 if __name__ == '__main__':

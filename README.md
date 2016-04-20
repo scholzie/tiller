@@ -32,8 +32,6 @@ Although **tiller** only interacts with your account when it can create or find 
 
 
 ### A bucket for secrets. A "secret bucket".
-__NB: This bucket is currently hardcoded to `ba-ops-data-dev` - please request access to this bucket for the account above, or change the appropriate line in `tillerlib/resources/terraform.py` to a bucket to which you have access.__ I hope to fix this soon, but it's a hairy problem to sort out for permissions reasons.
-
 Create an S3 bucket (with versioning, preferably) to store secrets in. 
 
 These secrets will include: 
@@ -66,6 +64,7 @@ Consider doing this with direnv (see Requirements section).
 export AWS_ACCESS_KEY_ID="<your key id>"
 export AWS_SECRET_ACCESS_KEY="<your secret access key>"
 export AWS_REGION=us-east-1
+export TILLER_SECRET_BUCKET="<your secret bucket>"
 export PACKER_ACCESS_KEY="${AWS_ACCESS_KEY_ID}"
 export PACKER_SECRET_KEY="${AWS_SECRET_ACCESS_KEY}"
 export PACKER_BUCKET_ACCESS_KEY="${AWS_ACCESS_KEY_ID}"
@@ -74,7 +73,7 @@ export PACKER_REGION="${AWS_REGION}"
 export AWS_DEFAULT_REGION="${AWS_REGION}"
 export PACKER_VPC_ID="<your vpc>"
 export PACKER_SUBNET_ID="<your subnet>"
-export PACKER_SECRET_BUCKET="<your secret bucket>"
+export PACKER_SECRET_BUCKET="${TILLER_SECRET_BUCKET}"
 export IAM_INSTANCE_PROFILE="AmazonECSContainerInstanceRole"
 ```
 

@@ -37,8 +37,8 @@ class TerraformResource(TillerResource):
 
     @tl.logged(logging.DEBUG)
     # TODO: if config.tiller has a state_key_ext or state_key_var field, add the ext (literal string)
-    # or var (interpolated, whitespace-stripped variable) to the state_key. This ensures that 
-    # resources which are identical other than their name will not share the same statefile. This is 
+    # or var (interpolated, whitespace-stripped variable) to the state_key. This ensures that
+    # resources which are identical other than their name will not share the same statefile. This is
     # particularly an issue for ECS clusters which should not share AWS resources
     def setup_remote_state(self, bucket, state_key, *args, **kwargs):
         """Set the remote state key. On success, returns True, else False."""
@@ -86,8 +86,11 @@ class TerraformResource(TillerResource):
                 logging.error("Encountered error while tryiing 'terraform get': %s" % e)
 
 
-            # FIXME: Fake it til you make it
-            bucket = 'ba-ops-data-dev'
+            # TODO: Better buckets - use config hierarchy (tl.getvar())
+            bucket = os.environ.get('TILLER_SECRET_BUCKET')
+            if not bucket:
+                raise tl.TillerException("No secret bucket set. Ensure the"
+                " TILLER_SECRET_BUCKET environment variable exists.")
             self.tf_state_key = kwargs.get('alternate_state_key')
             if not self.tf_state_key:
                 self.tf_state_key = '%s_%s' % (self.name, self.environment)
@@ -112,6 +115,7 @@ class TerraformResource(TillerResource):
                    log_only = any([kwargs.get('verbose'), kwargs.get('debug')])) == 0 else False
         except Exception as e:
             logging.error("Terraform validation error: {}".format(e))
+            raise
 
 
     @tl.logged(logging.DEBUG)
@@ -156,6 +160,7 @@ class TerraformResource(TillerResource):
                                          "See outout for more details (try re-running with --verbose or --debug)")
         except Exception as e:
             logging.error("Error while planning: {}".format(e))
+            raise
         finally:
             self.cleanup()
 
@@ -176,6 +181,7 @@ class TerraformResource(TillerResource):
             tl.run(cmd, args, self.path, log_only=any([kwargs.get('verbose'), kwargs.get('debug')]))
         except Exception as e:
             logging.error("Error while building: {}".format(e))
+            raise
         finally:
             self.cleanup()
 
@@ -187,6 +193,7 @@ class TerraformResource(TillerResource):
             tl.run('terraform show'.split(), cwd=self.path)
         except Exception as e:
             logging.error("Error while showing: {}".format(e))
+            raise
         finally:
             self.cleanup()
 
@@ -207,5 +214,6 @@ class TerraformResource(TillerResource):
                    log_only = any([kwargs.get('verbose'), kwargs.get('debug')]))
         except Exception as e:
             logging.error("Error while destroying: {}".format(e))
+            raise
         finally:
             self.cleanup()

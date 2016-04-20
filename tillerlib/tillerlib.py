@@ -53,6 +53,16 @@ def change_log_level(level, logger=None):
         return wrapper
     return decorate
 
+# TODO: Implement get_var
+def get_var(varname, **kwargs):
+    """In order, get the highest-overriding version of 'varname' and return its value.
+    These come from the global tiller config, resource-level config, environment variables,
+    and finally variables passed into the command line.
+
+    kwargs is expected to be something similiar to the runtime_vars dictionary passed around in
+    the main tiller.py module.
+    """
+    pass
 
 # def upgrade_logging(func, level, logger=None):
 
