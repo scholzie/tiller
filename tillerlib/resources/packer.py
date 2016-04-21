@@ -96,6 +96,7 @@ class PackerResource(TillerResource):
                 self.cleanup()
         except Exception as e:
             logging.error("Error while building packer file: {}".format(e))
+            raise
         finally:
             logging.getLogger().setLevel(oldLogLevel)
 
