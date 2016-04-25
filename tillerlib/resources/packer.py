@@ -66,16 +66,37 @@ class PackerResource(TillerResource):
             with open(os.path.join(self.path, self.name + '.out'), 'w') as f:
                 for line in iter(build_proc.stdout.readline, ""):
                     output = line.split(',')
-                    mtype = output[3]
-                    mtime = output[0]
-                    message = output[4].rstrip('\n')
-                    message = message.replace('%!(PACKER_COMMA)', ',')
-                    if mtype == 'say':
-                        logging.info('[{}] {}'.format(mtime, message))
-                    elif mtype == 'error':
-                        logging.error('[{}] {}'.format(mtime, message))
-                    else:
-                        logging.debug('[{}] {}'.format(mtime, message))
+                    try:
+                        mtime = output[0]
+                        mclass = output[2]
+                        if mclass == 'ui':
+                            mtype = output[3]
+                            message = output[4].rstrip('\n')
+                            message = message.replace('%!(PACKER_COMMA)', ',')
+                            if mtype == 'say':
+                                logging.info('[{}] {}'.format(mtime, message))
+                            elif mtype == 'error':
+                                logging.error('[{}] {}'.format(mtime, message))
+                            else:
+                                logging.debug('[{}] {}'.format(mtime, message))
+                        elif mclass == 'artifact-count':
+                            count = output[3]
+                            logging.info('[{}] Artifacts created: {}'.format(mtime, count))
+                        elif mclass == 'artifact':
+                            # We can't be sure how many fields there are... really 
+                            # shoddy output standards, has packer...
+                            artifact_id = output[3]
+                            key = output[4]
+                            if output[-1] != "end":
+                                value = output[5]
+                                logging.info('[{}] Artifact {} {}: {}'.format(mtime,
+                                             artifact_id, key, value))
+                            else:
+                                logging.info("[{}] End Artifact {}".format(mtime, artifact_id))
+
+                    except IndexError as e:
+                        logging.debug("Output format error on line: {}".format(line))
+                        continue
 
                     f.write(line)
 
