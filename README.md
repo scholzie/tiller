@@ -97,6 +97,18 @@ export IAM_INSTANCE_PROFILE="AmazonECSContainerInstanceRole"
 
 ### Note: many of the options require an `--env` flag to work for safety. 
 
+### Variable resolution order:
+When certain variables are required, they will be resolved in this order:
+
+For a variable named `varname`:
+- Local configurations:
+  - for terraform resources, `resources/terraform/name/terraform.tfvars`
+  - for packer resources, `resources/packer/<build file>.json[.tiller]`
+- Environment variables:
+  - `TILLER_varname=value`
+- Command line:
+  - `--var="varname=value"`
+- Any variables which are required but not otherwise set will prompt the user at runtime
 
 ## Limitations:
 I am not entirely sure that `destroy` works perfectly yet, but it does (apparently) work. 
