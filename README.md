@@ -29,7 +29,7 @@ Although **tiller** only interacts with your account when it can create or find 
   this against an account that is not already empty.
 - Set up a non-root user with administrative privileges. Note the access key ID
   and secret access key.
-
+- Set up a role which is connected to the policy `AmazonEC2ContainerServiceforEC2Role` if you plan on using ECS and Docker.
 
 ### A bucket for secrets. A "secret bucket".
 Create an S3 bucket (with versioning, preferably) to store secrets in. 
