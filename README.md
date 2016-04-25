@@ -59,6 +59,10 @@ You also need `docopt` until I package everything up properly:
 Familiarize yourself with the CLI:
 `./tiller.py --help`
 
+Run `./tiller.py list` to see what resources are available. The items that print out will be in `<namespace>/<name>` format. You can then `./tiller.py describe <resource>` (where `<resource>` is the fully-qualified namespace/name) to see what it does, and what its dependencies are.
+
+There is still [too much] manual setup that needs to be done, but this will be solved in future versions. For now, navigate to `resources/<namespace>/<name>` and configure the resource. If there is a `.sample` file, copy it and remove the `.sample` extension, then edit it. Anywhere you see VPC IDs, subnets, amis, etc., you will need to verify that these are correct before continuing.
+
 You will need to set some environment variables or pass in `--var="key=value"` pairs at the command line. Get started with the ones below. You don't need all of them for all things, but until the templating system is worked out I don't really have a great list of which ones you need for any particular run. _I'm working on it..._
 
 Consider doing this with direnv (see Requirements section).
@@ -90,6 +94,8 @@ export IAM_INSTANCE_PROFILE="AmazonECSContainerInstanceRole"
 
 ### To build a resource:
 `tiller.py build <resource> --env=<environment>`
+
+### Note: many of the options require an `--env` flag to work for safety. 
 
 
 ## Limitations:
