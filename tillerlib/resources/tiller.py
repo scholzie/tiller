@@ -26,7 +26,10 @@ class TillerResource(object):
             self.depends_on = json.loads(self.depends_on)
         self.required_vars = kwargs.get('required_vars')
         if self.required_vars:
-            self.required_vars = json.loads(self.required_vars)
+          # Take the list and make it an empty dictionary:
+          self.required_vars = {key: None for key in json.loads(self.required_vars)}
+          # self.required_vars = json.loads(self.required_vars)
+
         self._staged = False
         self._config_valid = False
 
@@ -46,6 +49,21 @@ class TillerResource(object):
                      self.depends_on,
                      self.required_vars))
 
+    @tl.logged(logging.INFO)
+    def check_vars(self, *args, **kwargs):
+      # resolution order (non-resource-dependent):
+      # Env vars
+      # command line (passed as **kwargs)
+
+      # Env vars:
+      for k in self.required_vars.keys():
+        self.required_vars[k] = os.environ.get('TILLER_{}'.format(k))
+        self.required_vars[k] = kwargs.get(k)
+
+      for v in self.required_vars.itervalues():
+        if not v:
+          return False
+      return True
 
     @classmethod
     def from_config(cls, config_file):
@@ -91,7 +109,10 @@ class TillerResource(object):
         """Stages a resource prior to executing a command.
         Sets environment, parses configuration files, and stops
         just prior to executing requested command"""
-        pass
+        for v in self.required_vars.itervalues():
+          if not v:
+            raise tl.TillerException("Required variable ({}) is not set.".v)
+        return True
 
     @abstractmethod
     def validate(self):

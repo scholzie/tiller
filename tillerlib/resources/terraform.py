@@ -21,6 +21,13 @@ class TerraformResource(TillerResource):
         #remove all whitespace
         self.environment = ''.join(env.split())
 
+    def check_vars(self):
+        """Check for required variables"""
+        # get them from terraform config files, then run super()
+        # TF:
+        # TODO: Parse terraform tfvars first.
+        # Tiller:
+        super(TerraformResource, self).check_vars(*args, **kwargs)
 
     @tl.logged(logging.DEBUG)
     def cleanup(self):
@@ -73,6 +80,8 @@ class TerraformResource(TillerResource):
 
     @tl.logged(logging.DEBUG)
     def stage(self, *args, **kwargs):
+
+        super(TerraformResource, self).stage(*args, **kwargs)
 
         if not self._staged:
             logging.debug("Environment not staged. Attempting to stage.")
