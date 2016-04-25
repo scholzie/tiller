@@ -24,12 +24,12 @@ To run these tools you will need a few things:
 ### An (_emptyish..._) AWS account
 Although **tiller** only interacts with your account when it can create or find valid state files, you should not use it with an account that contains anything you would be devastated to see accidentally destroyed until it's out of alpha.
 
-- This tool will be creating tons of resources. Chances are, unless you have
+- This tool may be create tons of resources, especially if you are building the `terraform/awsbase` resource for the first time. Chances are, unless you have
   previously taken steps to avoid it, you will hit resource limits by running
   this against an account that is not already empty.
 - Set up a non-root user with administrative privileges. Note the access key ID
   and secret access key.
-
+- Set up a role which is connected to the policy `AmazonEC2ContainerServiceforEC2Role` if you plan on using ECS and Docker.
 
 ### A bucket for secrets. A "secret bucket".
 Create an S3 bucket (with versioning, preferably) to store secrets in. 
@@ -51,8 +51,10 @@ Because it probably won't work the first time.
 Clone the `tiller` repo and checkout `develop`:
 ```
 $ git clone git@github.com:blueapron/tiller.git
-$ git checkout origin develop
+$ git checkout develop
 ```
+You also need `docopt` until I package everything up properly:
+`$ pip install docopt`
 
 Familiarize yourself with the CLI:
 `./tiller.py --help`
@@ -76,6 +78,19 @@ export PACKER_SUBNET_ID="<your subnet>"
 export PACKER_SECRET_BUCKET="${TILLER_SECRET_BUCKET}"
 export IAM_INSTANCE_PROFILE="AmazonECSContainerInstanceRole"
 ```
+
+### See what resources are available:
+`tiller.py list`
+
+### To describe what a resource is and what its depencendies are:
+`tiller.py describe <resource>`
+
+### To plan a build:
+`tiller.py plan <resource> --env=<environment>`
+
+### To build a resource:
+`tiller.py build <resource> --env=<environment>`
+
 
 ## Limitations:
 I am not entirely sure that `destroy` works perfectly yet, but it does (apparently) work. 
@@ -109,3 +124,7 @@ Please use the `develop` branch for all contributions. All changes should be mad
 18. resources/terraform.py:39   if config.tiller has a state_key_ext or state_key_var field, add the ext (literal string)
 19. resources/terraform.py:184  implement TerraformResource.show()
 20. resources/terraform.py:194  Handle force flag correctly. (I think this is done...)
+21. Explain how to set up resources by hand.
+22. Make it so you don't gotta do that^^
+23. Generate keypairs
+24. Configurable ami in base packer image. Ideally, find this based on region

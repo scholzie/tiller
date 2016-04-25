@@ -11,7 +11,7 @@ config = {
         'description':  'Tiller. Sow your oats.',
         'author':       'Chris Scholz',
         'author_email': 'devops@blueapron.com',
-        'install_requires': ['nose'],
+        'install_requires': ['docopt'],
         'packages':     ['tiller'],
         'scripts':      []
         }

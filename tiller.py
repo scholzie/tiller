@@ -144,6 +144,8 @@ def check_deps(resource, **kwargs):
 
     print "Checking dependencies for {}...".format(resource)
     deps_outstanding = 0
+    if not resource.depends_on:
+        return 0
     try:
         for dep in resource.depends_on:
             print "Processing dependency {}".format(dep)
