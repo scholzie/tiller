@@ -6,6 +6,7 @@ import shutil
 import logging
 import ConfigParser
 import time
+import json
 
 class TerraformResource(TillerResource):
     """docstring for TerraformResource"""
@@ -19,20 +20,21 @@ class TerraformResource(TillerResource):
         self._global_terraform_args = '-no-color'.split()
         self._plan_args = "-detailed-exitcode".split()
 
-    def setEnvironment(self, env):
-        # remove all whitespace
-        self.environment = ''.join(env.split())
+    # def setEnvironment(self, env):
+    #     # remove all whitespace
+    #     self.environment = ''.join(env.split())
 
     @tl.logged(logging.DEBUG)
-    def check_vars(self, *args, **kwargs):
+    def set_vars(self, *args, **kwargs):
         """Check for required variables"""
         # get them from terraform config files, then run super()
+        logging.debug("Current state of self.required_vars:")
+        logging.debug(self.required_vars)
 
         tfConfig = ConfigParser.RawConfigParser()
         # TODO: add JSON parsing to this list.
         # For now, support key=value files only
-        try_files = ['terraform.tfvars',
-                     'override.tfvars']
+        try_files = ['terraform.tfvars']
 
         for f in try_files:
             logging.debug("Trying {}...".format(f))
@@ -44,12 +46,19 @@ class TerraformResource(TillerResource):
                 for k in self.required_vars.keys():
                     if tfConfig.has_option('tiller', k):
                         logging.debug("Key: {} found. Overriding.".format(k))
-                        self.required_vars[k] = tfConfig.get('tiller', k)
+                        self.required_vars[k] = tfConfig.get('tiller', k).strip('"').strip("'")
                         logging.debug("New value => {}: {}".format(
                             k, tfConfig.get('tiller', k)))
+            else:
+                logging.debug("{} does not exist. Continuing.".format(file))
 
+        logging.debug("State of self.required_vars after tfvars parsing:")
+        logging.debug(self.required_vars)
         # Tiller overrides:
-        return super(TerraformResource, self).check_vars(*args, **kwargs)
+        logging.debug("Now attempting tiller var overrides...")
+        super(TerraformResource, self).set_vars(*args, **kwargs)
+
+        logging.debug("Final state of self.required_vars: {}".format(self.required_vars))
 
     @tl.logged(logging.DEBUG)
     def cleanup(self):
@@ -110,16 +119,36 @@ class TerraformResource(TillerResource):
         return tl.run('terraform remote pull'.split(), cwd=self.path)
 
     @tl.logged(logging.DEBUG)
+    def write_override_vars(self, file, **override_vars):
+        _vars = {"variable": dict()}
+        for k, v in override_vars.items():
+            logging.debug("KAY: {}, VALYU: {}".format(k, v))
+            _vars["variable"][k] = {"default": v}
+        with open(file, 'w') as fp:
+            logging.debug("Writing vars to {}:".format(fp.name))
+            logging.debug(json.dumps(_vars,
+                          sort_keys=True,
+                          indent=4,
+                          separators=(',', ': ')))
+            json.dump(_vars, fp,
+                      sort_keys=True,
+                      indent=4,
+                      separators=(',', ': '))
+
+    @tl.logged(logging.DEBUG)
     def stage(self, *args, **kwargs):
+        logging.debug("args {}".format(args))
+        logging.debug("kwargs {}".format(kwargs))
+
+        try:
+            self.set_vars(**kwargs)
+        except Exception as e:
+            logging.error("Unable to set tf variables: {}".format(e))
 
         try:
             super(TerraformResource, self).stage(*args, **kwargs)
-        except tl.TillerException as te:
-            logging.error("Unable to stage: {}".format(te))
-            raise te
         except Exception as e:
-            logging.error("Unable to stage: {}".format(e))
-            raise
+            logging.error("Unable to stage parent class: {}".format(e))
 
         if not self._staged:
             logging.debug("Environment not staged. Attempting to stage.")
@@ -127,13 +156,19 @@ class TerraformResource(TillerResource):
                 raise tl.TillerException("Mandatory environment name for "
                                          "{} is not set.".format(self))
             try:
+                self.write_override_vars(os.path.join(self.path, "tiller_override.tf.json"), **self.required_vars)
+            except Exception as e:
+                logging.error("Cannot write override variables: {}".format(e))
+
+            try:
                 tl.run('terraform get'.split(), cwd=self.path,
                        log_only=True)
             except Exception as e:
                 logging.error("Encountered error while trying "
                               "'terraform get': %s" % e)
 
-            # TODO: Better buckets - use config hierarchy (tl.getvar())
+
+            # TODO: Better buckets - use config hierarchy (implement tl.getvar())
             bucket = os.environ.get('TILLER_SECRET_BUCKET')
             if not bucket:
                 raise tl.TillerException("No secret bucket set. Ensure the "
@@ -142,6 +177,12 @@ class TerraformResource(TillerResource):
             self.tf_state_key = kwargs.get('alternate_state_key')
             if not self.tf_state_key:
                 self.tf_state_key = '%s_%s' % (self.name, self.environment)
+
+            
+            # if not self.required_vars_set():
+            #     raise tl.TillerException()
+            # write out variables to override.tfvars.json:
+
             if all([self.validate(),
                     self.setup_remote_state(bucket,
                                             self.tf_state_key,

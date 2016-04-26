@@ -8,7 +8,7 @@ class FakeSectionHeader(object):
     """Return the contents of a .properties (key=value) style file in an ini 
     format so that it can be used with ConfigParser"""
     def __init__(self, fp, fake_section="default"):
-        super(FakeSectionHeader, self).__init__(self)
+        super(FakeSectionHeader, self).__init__()
         self.fp = fp
         self.header = '[{}]\n'.format(fake_section)
 
