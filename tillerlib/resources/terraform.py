@@ -5,7 +5,7 @@ import shutil
 # import subprocess
 import logging
 import ConfigParser
-import time
+import sys
 import json
 
 class TerraformResource(TillerResource):
@@ -149,12 +149,18 @@ class TerraformResource(TillerResource):
             super(TerraformResource, self).stage(*args, **kwargs)
         except Exception as e:
             logging.error("Unable to stage parent class: {}".format(e))
+            sys.exit(1)
 
         if not self._staged:
             logging.debug("Environment not staged. Attempting to stage.")
-            if not self.environment:
-                raise tl.TillerException("Mandatory environment name for "
-                                         "{} is not set.".format(self))
+            try:
+                if not self.environment:
+                    raise tl.TillerException("Mandatory environment name for "
+                                             "{} is not set.".format(self))
+            except Exception as e:
+                logging.error(e.message)
+                sys.exit(1)
+
             try:
                 self.write_override_vars(os.path.join(self.path, "tiller_override.tf.json"), **self.required_vars)
             except Exception as e:
