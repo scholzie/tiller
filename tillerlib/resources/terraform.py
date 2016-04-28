@@ -298,13 +298,11 @@ class TerraformResource(TillerResource):
 
 
     def show(self, *args, **kwargs):
-        # TODO: implement TerraformResource.show()
         try:
             self.check_stage(*args, **kwargs)
             tl.run('terraform show'.split(), cwd=self.path)
         except Exception as e:
             logging.error("Error while showing: {}".format(e))
-            raise
         finally:
             self.cleanup()
 
