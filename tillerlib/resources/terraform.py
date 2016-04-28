@@ -19,6 +19,7 @@ class TerraformResource(TillerResource):
         self.overide_vars_file = None
         self._global_terraform_args = '-no-color'.split()
         self._plan_args = "-detailed-exitcode".split()
+        self._cleanup_files = []  # files we'll create and need to delete
 
     # def setEnvironment(self, env):
     #     # remove all whitespace
@@ -74,7 +75,14 @@ class TerraformResource(TillerResource):
                     os.path.join(self.path, '.terraform')))
         else:
             logging.debug("No local .terraform directory exists.")
-        pass
+        for f in self._cleanup_files:
+            if os.path.exists(f):
+                try:
+                    logging.debug("Removing {}...".format(f))
+                    os.remove(f)
+                except Exception as e:
+                    logging.debug("Could not remove {}: {}".format(
+                        f, e.message))
 
     @tl.logged(logging.DEBUG)
     # TODO: if config.tiller has a state_key_ext or state_key_var field, add
@@ -134,6 +142,7 @@ class TerraformResource(TillerResource):
                       sort_keys=True,
                       indent=4,
                       separators=(',', ': '))
+            self._cleanup_files.append(fp.name)   
 
     @tl.logged(logging.DEBUG)
     def stage(self, *args, **kwargs):
