@@ -75,6 +75,7 @@ class TerraformResource(TillerResource):
                     os.path.join(self.path, '.terraform')))
         else:
             logging.debug("No local .terraform directory exists.")
+
         for f in self._cleanup_files:
             if os.path.exists(f):
                 try:
@@ -167,7 +168,7 @@ class TerraformResource(TillerResource):
                     raise tl.TillerException("Mandatory environment name for "
                                              "{} is not set.".format(self))
             except Exception as e:
-                logging.error(e.message)
+                logging.error("Unable to stage: {}.".format(e))
                 sys.exit(1)
 
             try:
