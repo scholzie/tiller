@@ -1,0 +1,5 @@
+[resource]
+name = discrete-service
+description = builds single public facing instance, with chef policy supplied at runtime
+long_description = builds single public facing instance, with chef policy supplied at runtime
+required_vars = ["policy_name", "service_name", "subnet_id", "ami", "host_environment",  "key_name", "region", "secret_key", "access_key", "vpc_id"]

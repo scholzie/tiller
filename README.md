@@ -5,7 +5,29 @@
 
 The initial reason for its creation was to allow for easy deployment of staging and development environments to match production by any engineer into his or her own AWS account.
 
-## Contents
+
+# Contents
+
+* [Provisioning an Environment](#provising-an-environment)
+* [Tiller](#tiller)
+
+
+# Provisioning an Environment
+
+## AWSBase
+This provides the base AWS structure, for out environment to live
+```bash
+./tiller.py plan terraform/awsbase --var="ami=<latest_ba_ami>" --env dev
+```
+
+## Consul Cluster
+```bash
+./tiller.py build terraform/consul --var="private_subnet_ids=" --var="consul_shared_secret=" --var="ami=" --env dev
+```
+
+
+# Tiller
+
 | Directory | Description |
 | --- | --- |
 | `resources` | Contains tiller _resources_. See README.md in that directory for more information on how to write a resource. |
@@ -13,7 +35,8 @@ The initial reason for its creation was to allow for easy deployment of staging 
 | `tiller.py` | The application itself | 
 | `poutine` | a wrapper for terraform. Still works - use it until tiller is done. See README.old.md for its proper use. |
 
-# Requirements
+
+## Requirements
 
 To run these tools you will need a few things:
 ### Installed software:

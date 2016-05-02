@@ -3,7 +3,7 @@
     tiller.py [options] plan <resource> [--destroy] [--var=<key=val>]...
     tiller.py [options] build <resource> [--var=<key=val>]...
     tiller.py [options] show <resource>
-    tiller.py [options] destroy <resource>
+    tiller.py [options] destroy <resource> [--var=<key=val>]...
     tiller.py [options] list
     tiller.py [options] describe <resource>
     tiller.py [options] stage <resource> [--var=<key=val>]...
@@ -138,7 +138,8 @@ def parse_runtime_vars(args):
     """
         Given a list of key=value, return a dict of those values
     """
-    return dict(kv.split('=') for kv in args)
+    # split on the first occurrence of '='. this is to allow equals character in the values
+    return dict(kv.split('=', 1) for kv in args)
 
 
 @tl.logged(logging.DEBUG)
