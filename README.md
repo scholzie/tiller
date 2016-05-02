@@ -102,20 +102,21 @@ When certain variables are required, they will be resolved in this order:
 
 For a variable named `varname`:
 - Local configurations:
-  - for terraform resources, `resources/terraform/name/terraform.tfvars`
+  - for terraform resources, `resources/terraform/name/terraform.tfvars`. This file has a `key=value` style format.
   - for packer resources, `resources/packer/<build file>.json[.tiller]`
 - Environment variables:
   - `TILLER_varname=value`
 - Command line:
   - `--var="varname=value"`
 - Any variables which are required but not otherwise set will prompt the user at runtime
+  - _Note: this is only true for Terraform resources right now._
 
 ## Limitations:
 I am not entirely sure that `destroy` works perfectly yet, but it does (apparently) work. 
 
 
 # Contributing
-Please use the `develop` branch for all contributions. All changes should be made in `feature/<feature_name>` or `hotfix/<hotfix_name>` branches. For those of you using `arcanist` (_PLEASE DO_), `arc diff` and `arc push` will automatically reference `origin/develop`. Otherwise, please create your pull requests on `develop` ___and not `master`___
+Please use the `develop` branch for all contributions. All changes should be made in `feature/<feature_name>` or `hotfix/<hotfix_name>` branches. For those of you using [Phabricator](https://phabricator.blueapron.com) and `arcanist`, `arc diff` and `arc push` will automatically reference `origin/develop`. Otherwise, please create your pull requests on `develop` ___and not `master`___
 
 
 ## TODO (21)
