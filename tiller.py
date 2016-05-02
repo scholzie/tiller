@@ -138,7 +138,8 @@ def parse_runtime_vars(args):
     """
         Given a list of key=value, return a dict of those values
     """
-    return dict(kv.split('=') for kv in args)
+    # split on the first occurrence of '='. this is to allow equals character in the values
+    return dict(kv.split('=', 1) for kv in args)
 
 
 @tl.logged(logging.DEBUG)
