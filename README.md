@@ -11,17 +11,18 @@ The initial reason for its creation was to allow for easy deployment of staging 
 * [Provisioning an Environment](#provising-an-environment)
 * [Tiller](#tiller)
 
+
 # Provisioning an Environment
 
 ## AWSBase
 This provides the base AWS structure, for out environment to live
-```
+```bash
 ./tiller.py plan terraform/awsbase --var="ami=<latest_ba_ami>" --env dev
 ```
 
 ## Consul Cluster
-```
-./tiller.py plan terraform/consul --var --env dev
+```bash
+./tiller.py build terraform/consul --var="private_subnet_ids=" --var="consul_shared_secret=" --var="ami=" --env dev
 ```
 
 
