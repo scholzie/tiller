@@ -61,9 +61,10 @@ class TillerResource(object):
         """
         Return True if all the required variables have a value. Else False.
         """
-        for v in self.required_vars.values():
-            if not v:
-                return False
+        if self.required_vars:
+            for v in self.required_vars.values():
+                if not v:
+                    return False
         return True
 
     @tl.logged(logging.DEBUG)
