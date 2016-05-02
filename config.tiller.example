@@ -1,0 +1,35 @@
+[resource]
+
+# name - The name to which this resource will be referred. Should contain 
+# no whitespace. (Required)
+name = resource-name
+
+# description - a brief description of what this resource provides
+# Will be displayed with the "list" output. (Required)
+description = A short description
+
+# long_description - A longer description of what this resource provides.
+# Will be displayed in the "describe" output
+long_description = A longer description, displayed on the describe screen
+
+# depends_on - a JSON-style list of fully qualified (<namespace/name>) resources
+# required to be present before this resource can be built.
+depends_on = ["namespace/resource_name","etc..."]
+
+# required_vars - a JSON-style of variables which must be passed into tiller for
+# this resource to be built
+required_vars = ["varname","varname2","etc..."]
+
+# state_key_ext and state_key_var are intended to be extensions to the terraform
+# remote state key for resources which might be built multiple times and should
+# therefore maintain different states. Examples might be different ECS clusters
+# which run different tools, multiple HAProxy instances, etc.
+#
+# They are not intended to be used together, and will cause an error if they are.
+
+# state_key_ext - a string extension to add to the terraform remote state key
+state_key_ext = "some_ext"
+
+# state_key_var - an internal variable (from terraform, or passed into tiller) 
+# to be used as a replacement for the state_key_ext above. 
+state_key_var = ["variable_name"]
