@@ -4,6 +4,9 @@ export TILLER_region=""
 export TILLER_azs=""
 export TILLER_key_name=""
 export TILLER_secret_bucket=""
+export TILLER_vpc_cidr=""
+export TILLER_vpc_id=""
+
 
 export AWS_ACCESS_KEY_ID=""
 export AWS_SECRET_ACCESS_KEY=""
