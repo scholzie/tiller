@@ -61,11 +61,14 @@ class TillerResource(object):
         """
         Return True if all the required variables have a value. Else False.
         """
+
+        all_vars_set = True
         if self.required_vars:
-            for v in self.required_vars.values():
+            for k, v in self.required_vars.items():
                 if not v:
-                    return False
-        return True
+                    logging.error("Required variable {} is not set".format(k))
+                    all_vars_set = False
+        return all_vars_set
 
     @tl.logged(logging.DEBUG)
     def set_vars(self, *args, **kwargs):
