@@ -3,6 +3,25 @@ from functools import wraps
 import subprocess
 import os
 
+
+class FakeSectionHeader(object):
+    """Return the contents of a .properties (key=value) style file in an ini 
+    format so that it can be used with ConfigParser"""
+    def __init__(self, fp, fake_section="default"):
+        super(FakeSectionHeader, self).__init__()
+        self.fp = fp
+        self.header = '[{}]\n'.format(fake_section)
+
+    def readline(self):
+        if self.header:
+            try:
+                return self.header
+            finally:
+                self.header = None
+        else:
+            return self.fp.readline()
+
+
 class TillerException(Exception):
     """Wrapper for Tiller Exceptions"""
     def __init__(self, *args, **kwargs):

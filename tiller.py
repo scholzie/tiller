@@ -54,13 +54,13 @@ def list_resources():
     for root, dirs, files in os.walk(resources_dirname):
         for f in files:
             if f == config_filename:
-                logging.debug("creating resource from %s in %s" % (f,root))
+                logging.debug("creating resource from %s in %s" % (f, root))
                 namespace = root.split('/')[1]
                 if namespace == 'terraform':
                     r = TerraformResource.from_config(os.path.join(root, f))
                 elif namespace == 'packer':
                     logging.debug('creating resource')
-                    r = PackerResource.from_config(os.path.join(root,f))
+                    r = PackerResource.from_config(os.path.join(root, f))
                 else:
                     r = TillerResource.from_config(os.path.join(root, f))
                 # Create a new entry in resource{} with the name of the
@@ -106,25 +106,31 @@ def resource_by_name(resource_name):
 def describe(resource_name):
     """Describe a resource"""
     resource = resource_by_name(resource_name)
-    print "Resource: ", '/'.join([resource.namespace,resource.name])
+    print "Resource: ", '/'.join([resource.namespace, resource.name])
     prefix="Description: "
     description = textwrap.TextWrapper(initial_indent=prefix,
-                                       width = 64,
-                                       subsequent_indent = ' '*len(prefix),
-                                       replace_whitespace = False,
-                                       expand_tabs = True)
+                                       width=64,
+                                       subsequent_indent=' ' * len(prefix),
+                                       replace_whitespace=False,
+                                       expand_tabs=True)
     print description.fill(resource.long_description)
     logging.debug(resource)
 
     if resource.depends_on:
-        prefix = "Depends on:"
+        prefix = "Depends on: "
         depends_text = textwrap.TextWrapper(initial_indent=prefix,
-                                            width = 64,
-                                            subsequent_indent = ' '*len(prefix),
-                                            expand_tabs = True)
+                                            width=64,
+                                            subsequent_indent=' ' * len(prefix),
+                                            expand_tabs=True)
         print depends_text.fill("\n".join(resource.depends_on[1:]))
     if resource.required_vars:
-        pass
+        prefix = "Required vars: "
+        rv_text = textwrap.TextWrapper(initial_indent=prefix,
+                                       width=64,
+                                       subsequent_indent=' ' * len(prefix),
+                                       expand_tabs=True)
+        rvs = sorted(resource.required_vars.keys())
+        print rv_text.fill('\n'.join(rvs))
 
 
 @tl.logged(logging.DEBUG)
@@ -133,6 +139,7 @@ def parse_runtime_vars(args):
         Given a list of key=value, return a dict of those values
     """
     return dict(kv.split('=') for kv in args)
+
 
 @tl.logged(logging.DEBUG)
 def check_deps(resource, **kwargs):
@@ -177,7 +184,7 @@ def main(args):
         logging.basicConfig(level=logging.ERROR)
 
     if args['--env']:
-        env = ''.join(args['--env'].split()) # nowhitespaceplease
+        env = ''.join(args['--env'].split())  # nowhitespaceplease
     else:
         env = None
 

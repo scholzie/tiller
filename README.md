@@ -59,6 +59,10 @@ You also need `docopt` until I package everything up properly:
 Familiarize yourself with the CLI:
 `./tiller.py --help`
 
+Run `./tiller.py list` to see what resources are available. The items that print out will be in `<namespace>/<name>` format. You can then `./tiller.py describe <resource>` (where `<resource>` is the fully-qualified namespace/name) to see what it does, and what its dependencies are.
+
+There is still [too much] manual setup that needs to be done, but this will be solved in future versions. For now, navigate to `resources/<namespace>/<name>` and configure the resource. If there is a `.sample` file, copy it and remove the `.sample` extension, then edit it. Anywhere you see VPC IDs, subnets, amis, etc., you will need to verify that these are correct before continuing.
+
 You will need to set some environment variables or pass in `--var="key=value"` pairs at the command line. Get started with the ones below. You don't need all of them for all things, but until the templating system is worked out I don't really have a great list of which ones you need for any particular run. _I'm working on it..._
 
 Consider doing this with direnv (see Requirements section).
@@ -91,40 +95,53 @@ export IAM_INSTANCE_PROFILE="AmazonECSContainerInstanceRole"
 ### To build a resource:
 `tiller.py build <resource> --env=<environment>`
 
+### Note: many of the options require an `--env` flag to work for safety. 
+
+### Variable resolution order:
+When certain variables are required, they will be resolved in this order:
+
+For a variable named `varname`:
+- Local configurations:
+  - for terraform resources, `resources/terraform/name/terraform.tfvars`. This file has a `key=value` style format.
+  - for packer resources, `resources/packer/<build file>.json[.tiller]`
+- Environment variables:
+  - `TILLER_varname=value`
+- Command line:
+  - `--var="varname=value"`
+- Any variables which are required but not otherwise set will prompt the user at runtime
+  - _Note: this is only true for Terraform resources right now._
 
 ## Limitations:
 I am not entirely sure that `destroy` works perfectly yet, but it does (apparently) work. 
 
 
 # Contributing
-Please use the `develop` branch for all contributions. All changes should be made in `feature/<feature_name>` or `hotfix/<hotfix_name>` branches. For those of you using `arcanist` (_PLEASE DO_), `arc diff` and `arc push` will automatically reference `origin/develop`. Otherwise, please create your pull requests on `develop` ___and not `master`___
+Please use the `develop` branch for all contributions. All changes should be made in `feature/<feature_name>` or `hotfix/<hotfix_name>` branches. For those of you using [Phabricator](https://phabricator.blueapron.com) and `arcanist`, `arc diff` and `arc push` will automatically reference `origin/develop`. Otherwise, please create your pull requests on `develop` ___and not `master`___
 
-## FIXME (2)
-1. poutine/poutine:92           (0) State file correctly tagged, but future runs with different environment names affect previous environments. Not sure why...
-2. resources/terraform.py:89    Fake it til you make it
 
-## TODO (20)
-1. poutine/poutine:9            Add packer run functionality 
-2. poutine/poutine:10           Rename project "tiller", ./poutine -> ./till
-3. poutine/poutine:11           Capture output from network creation and pre-fill terraform.tfvars sample for other modules
-4. poutine/poutine:12           Add help system (see https://github.com/docopt/docopt)
-5. poutine/poutine:106          Make this a little nicer, if you feel like it.
-6. poutine/tiller.py:76         Rather than compile all resources and pick one, start by assuming we 
-7. poutine/tiller.py:141        update check_deps to wrap a build/plan/etc function to check deps 
-8. poutine/tiller.py:192        Finish 'plan'
-9. poutine/tiller.py:194        the following pattern is used multiple times.
-10. poutine/tiller.py:212       finish 'build'
-11. poutine/tiller.py:231       Implement 'show'
-12. poutine/tiller.py:245       Implement 'destroy'
-13. docker-ecs/main.tf:19       Investigate what SG rules are needed for apps to work
-14. docker-ecs/main.tf:85       Figure out subnets automatically. Either use a module, or pre-fill from network output
-15. resources/packer.py:132     change this so we can figure out what variables to require.
-16. resources/packer.py:192     implement PackerResource.plan()
-17. resources/packer.py:197     packer inspect packerfile.json
-18. resources/terraform.py:39   if config.tiller has a state_key_ext or state_key_var field, add the ext (literal string)
-19. resources/terraform.py:184  implement TerraformResource.show()
-20. resources/terraform.py:194  Handle force flag correctly. (I think this is done...)
-21. Explain how to set up resources by hand.
-22. Make it so you don't gotta do that^^
-23. Generate keypairs
-24. Configurable ami in base packer image. Ideally, find this based on region
+## TODO (21)
+1. poutine/tiller.py:76          Rather than compile all resources and pick one, start by assuming we 
+2. poutine/tiller.py:148         update check_deps to wrap a build/plan/etc function to check deps
+3. poutine/tiller.py:201         Finish 'plan'
+4. poutine/tiller.py:203         the following pattern is used multiple times.
+5. poutine/tiller.py:219         finish 'build'
+6. poutine/tiller.py:236         Implement 'show'
+7. poutine/tiller.py:250         Implement 'destroy'
+8. discrete-service/main.tf:27   should move this to a module, or something similar and share the rules
+9. discrete-service/main.tf:33   move to only whitelist office ip?
+10. docker-ecs/main.tf:19        Investigate what SG rules are needed for apps to work
+11. docker-ecs/main.tf:85        Figure out subnets automatically. Either use a module, or pre-fill from network output
+12. tillerlib/tillerlib.py:75    Implement get_var
+13. resources/packer.py:43       Parse packer vars first, whatever that actually means
+14. resources/packer.py:163      change this so we can figure out what variables to require.
+15. resources/packer.py:223      implement PackerResource.plan()
+16. resources/packer.py:228      packer inspect packerfile.json
+17. resources/terraform.py:36    add JSON parsing to this list.
+18. resources/terraform.py:89    if config.tiller has a state_key_ext or state_key_var field, add
+19. resources/terraform.py:187   Better buckets - use config hierarchy (implement tl.getvar())
+- [x] resources/terraform.py:301   implement TerraformResource.show()
+21. resources/terraform.py:312   Handle force flag correctly.
+22. Explain how to set up resources by hand.
+23. Make it so you don't gotta do that^^
+24. Generate keypairs
+25. Configurable ami in base packer image. Ideally, find this based on region

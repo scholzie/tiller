@@ -24,6 +24,9 @@ class PackerResource(TillerResource):
     def stage(self, *args, **kwargs):
         logging.debug("args: {}".format(args))
         logging.debug("kwargs: {}".format(kwargs))
+
+        super(PackerResource, self).stage(*args, **kwargs)
+
         self._packer_file = self.generate_json(**kwargs)
         self.validate_tiller_config()
         self._staged = all([self._config_valid, self._packer_file])
@@ -33,6 +36,12 @@ class PackerResource(TillerResource):
         logging.debug("Staging: self._staged: {}".format(self._staged))
 
         return self._staged
+
+
+    @tl.logged(logging.DEBUG)
+    def check_vars(self, *args, **kwargs):
+        # TODO: Parse packer vars first, whatever that actually means
+        super(PackerResource, self).check_vars(*args, **kwargs)
 
     @tl.logged(logging.DEBUG)
     def build(self, *args, **kwargs):
