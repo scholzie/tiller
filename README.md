@@ -138,7 +138,7 @@ Please use the `develop` branch for all contributions. All changes should be mad
 17. resources/terraform.py:36    add JSON parsing to this list.
 18. resources/terraform.py:89    if config.tiller has a state_key_ext or state_key_var field, add
 19. resources/terraform.py:187   Better buckets - use config hierarchy (implement tl.getvar())
-- [ ] resources/terraform.py:301   implement TerraformResource.show()
+- [x] resources/terraform.py:301   implement TerraformResource.show()
 21. resources/terraform.py:312   Handle force flag correctly.
 22. Explain how to set up resources by hand.
 23. Make it so you don't gotta do that^^
