@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-"""Usage:
+"""
+Usage:
     tiller.py [options] plan <resource> [--destroy] [--var=<key=val>]...
     tiller.py [options] build <resource> [--var=<key=val>]...
     tiller.py [options] show <resource>
@@ -73,12 +74,12 @@ def list_resources():
     return resources
 
 
-# TODO: Rather than compile all resources and pick one, start by assuming we 
-# know the name reach out and grab it, then return the proper 
+# TODO: Rather than compile all resources and pick one, start by assuming we
+# know the name reach out and grab it, then return the proper
 # TillerResource.from_config(). As this stands, this will only work if the name
 # of the resource is the same as its directory, which we don't enforce.
-# Right now, we just run list_resources() and pull out the correct named one for
-# the sake of compatability with the future intent of this function's use.
+# Right now, we just run list_resources() and pull out the correct named one
+# for the sake of compatability with the future intent of this function's use.
 def resource_by_name(resource_name):
     """return a named resource (namespace/name)"""
     # path = os.path.join('resources', os.path.dirname(resource_name))
@@ -107,7 +108,7 @@ def describe(resource_name):
     """Describe a resource"""
     resource = resource_by_name(resource_name)
     print "Resource: ", '/'.join([resource.namespace, resource.name])
-    prefix="Description: "
+    prefix = "Description: "
     description = textwrap.TextWrapper(initial_indent=prefix,
                                        width=64,
                                        subsequent_indent=' ' * len(prefix),
@@ -122,7 +123,7 @@ def describe(resource_name):
                                             width=64,
                                             subsequent_indent=' ' * len(prefix),
                                             expand_tabs=True)
-        print depends_text.fill("\n".join(resource.depends_on[1:]))
+        print depends_text.fill("\n".join(resource.depends_on))
     if resource.required_vars:
         prefix = "Required vars: "
         rv_text = textwrap.TextWrapper(initial_indent=prefix,
