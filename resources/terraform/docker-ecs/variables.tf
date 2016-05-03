@@ -33,7 +33,7 @@ variable "azs" {
 # }
 
 variable "instance_type" {
-    default = "m1.small"
+    default = "m3.medium"
     description = "Name of the AWS instance type"
 }
 
