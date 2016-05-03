@@ -18,13 +18,16 @@ class TerraformResource(TillerResource):
         self.tf_state_key = None
         self.overide_vars_file = None
         self._global_terraform_args = '-no-color'.split()
-        self._plan_args = "-detailed-exitcode".split()
+        self._plan_args = "-detailed-exitcode -input=true".split()
         self._cleanup_files = []  # files we'll create and need to delete
+        self.state_key_ext = kwargs.get('state_key_ext')
+        self.state_key_var = kwargs.get('state_key_var')
 
     # def setEnvironment(self, env):
     #     # remove all whitespace
     #     self.environment = ''.join(env.split())
 
+    
     @tl.logged(logging.DEBUG)
     def set_vars(self, *args, **kwargs):
         """Check for required variables"""
@@ -164,6 +167,7 @@ class TerraformResource(TillerResource):
         if not self._staged:
             logging.debug("Environment not staged. Attempting to stage.")
             try:
+                #TODO: lol this is stupid. Fix it
                 if not self.environment:
                     raise tl.TillerException("Mandatory environment name for "
                                              "{} is not set.".format(self))
@@ -192,13 +196,31 @@ class TerraformResource(TillerResource):
                                          "variable exists.")
             self.tf_state_key = kwargs.get('alternate_state_key')
             if not self.tf_state_key:
-                self.tf_state_key = '%s_%s' % (self.name, self.environment)
+                try:
+                    if self.state_key_var:
+                        logging.debug("Creating state key with state_key_var "
+                                      "{}, value {}".format(self.state_key_var,
+                                                            kwargs[self.state_key_var]))
+                        self.tf_state_key = '{}-{}_{}'.format(self.name,
+                                                              kwargs[self.state_key_var],
+                                                              self.environment)
+                    elif self.state_key_ext:
+                        logging.debug("Creating state key with state_key_ext"
+                                      " {}".format(self.state_key_ext))
+                        self.tf_state_key = '{}-{}_{}'.format(self.name,
+                                                              self.state_key_ext,
+                                                              self.environment)
+                    else:
+                        logging.debug("Creating default state key")
+                        self.tf_state_key = '{}_{}'.format(self.name,
+                                                           self.environment)
+                except KeyError:
+                    raise tl.TillerException("Attempted to setup state key with "
+                                          "state_key_var '{}', but none exists"
+                                          " in resource.".format(self.state_key_var))
 
-            
-            # if not self.required_vars_set():
-            #     raise tl.TillerException()
-            # write out variables to override.tfvars.json:
-
+            logging.debug("Terraform Remote State Key: {}".format(
+                self.tf_state_key))
             if all([self.validate(),
                     self.setup_remote_state(bucket,
                                             self.tf_state_key,
