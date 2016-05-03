@@ -200,9 +200,9 @@ class TerraformResource(TillerResource):
                     if self.state_key_var:
                         logging.debug("Creating state key with state_key_var "
                                       "{}, value {}".format(self.state_key_var,
-                                                            kwargs[self.state_key_var]))
+                                                            self.required_vars[self.state_key_var]))
                         self.tf_state_key = '{}-{}_{}'.format(self.name,
-                                                              kwargs[self.state_key_var],
+                                                              self.required_vars[self.state_key_var],
                                                               self.environment)
                     elif self.state_key_ext:
                         logging.debug("Creating state key with state_key_ext"
