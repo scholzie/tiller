@@ -18,7 +18,7 @@ class TerraformResource(TillerResource):
         self.tf_state_key = None
         self.overide_vars_file = None
         self._global_terraform_args = '-no-color'.split()
-        self._plan_args = "-detailed-exitcode -input=true".split()
+        self._plan_args = "-detailed-exitcode".split()
         self._cleanup_files = []  # files we'll create and need to delete
         self.state_key_ext = kwargs.get('state_key_ext')
         self.state_key_var = kwargs.get('state_key_var')
