@@ -15,7 +15,6 @@ variable "inbound_ssh_cidrs" {
 }
 
 variable "key_name" {
-    default = "ecs-default"
     description = "SSH key name in your AWS account for AWS instances."
 }
 

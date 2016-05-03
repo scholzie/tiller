@@ -1,6 +1,6 @@
 # Discrete Service Config
 
-variable "service_name"      { }
+variable "service_name"     { }
 variable "vpc_id"           { }
 variable "subnet_id"        { }
 variable "key_name"         { }
@@ -9,7 +9,7 @@ variable "ami"              { }
 variable "host_environment" { }
 variable "access_key"       { }
 variable "secret_key"       { }
-variable "region"           {  }
+variable "region"           { }
 variable "instance_type"    { default = "t2.micro" }
 variable "public"           { default = true }
 
@@ -96,6 +96,5 @@ resource "aws_instance" "service" {
   }
 }
 
-output "public_dns" { value = "${aws_instance.service.public_dns}" }
-output "host_environment" { value = "${var.host_environment}" }
+output "public_dns" { value = "${aws_instance.service.public_dns}" } output "host_environment" { value = "${var.host_environment}" }
 output "policy_name" { value = "${var.policy_name}" }

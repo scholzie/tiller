@@ -76,6 +76,10 @@ class TillerResource(object):
         # Env vars
         # command line (passed as **kwargs)
 
+        # get --vars passed added to variable dict
+        for k, v in kwargs.items():
+            self.required_vars[k] = v
+
         # Env vars:
         for k in self.required_vars.keys():
             logging.debug("Checking for values for {}".format(k))
