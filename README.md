@@ -1,5 +1,5 @@
 ![tiller](http://i.imgur.com/TB3W2EU.jpg)
-
+<script type="text/javascript" src="https://asciinema.org/a/9snezgiberhtzwo9hm660uxns.js" id="asciicast-9snezgiberhtzwo9hm660uxns" async></script>
 # Synopsis
 `tiller` is a logical progression from `poutine` - it's a python wrapper for packer and terraform which extends `poutine` to allow for resource dependencies, passing inputs to a dependant resource from the outputs of its dependencies, and extensibility by anyone who can write packer or terraform files.
 
