@@ -3,7 +3,7 @@
 Usage:
     tiller.py [options] plan <resource> [--destroy] [--var=<key=val>]...
     tiller.py [options] build <resource> [--var=<key=val>]...
-    tiller.py [options] show <resource>
+    tiller.py [options] show <resource> [--var=<key=val>]...
     tiller.py [options] destroy <resource> [--var=<key=val>]...
     tiller.py [options] list
     tiller.py [options] describe <resource>
@@ -235,8 +235,17 @@ def main(args):
             logging.error(e)
 
     elif args['show']:
-        # TODO: Implement 'show'
-        logging.info("Showing.")
+        resname = args['<resource>']
+        logging.info("Showing details for {}".format(resname))
+        logging.debug("Show args: {}".format(runtime_vars))
+        r = resource_by_name(resname)
+        r.environment = env if env else None
+        try:
+            r.show(**runtime_vars)
+        except tl.TillerException as te:
+            print te[1]
+        except Exception as e:
+            logging.error(e)
 
     elif args['describe']:
         resname = args['<resource>']
