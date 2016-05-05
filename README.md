@@ -148,7 +148,7 @@ For a variable named `varname`:
 ## Examples
 
 ### AWSBase
-This provides the base AWS structure, for out environment to live
+This provides the base AWS structure, for our environment to live
 ```bash
 ./tiller.py plan terraform/awsbase --var="ami=<latest_ba_ami>" --env dev
 ```
