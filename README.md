@@ -11,22 +11,10 @@ The initial reason for its creation was to allow for easy deployment of staging 
 
 # Contents
 
-* [Provisioning an Environment](#provising-an-environment)
 * [Tiller](#tiller)
-
-
-# Provisioning an Environment
-
-## AWSBase
-This provides the base AWS structure, for out environment to live
-```bash
-./tiller.py plan terraform/awsbase --var="ami=<latest_ba_ami>" --env dev
-```
-
-## Consul Cluster
-```bash
-./tiller.py build terraform/consul --var="private_subnet_ids=" --var="consul_shared_secret=" --var="ami=" --env dev
-```
+* [Requirements](#requirements)
+* [Use](#use)
+* [Examples](#examples)
 
 
 # Tiller
@@ -91,23 +79,43 @@ There is still [too much] manual setup that needs to be done, but this will be s
 
 You will need to set some environment variables or pass in `--var="key=value"` pairs at the command line. Get started with the ones below. You don't need all of them for all things, but until the templating system is worked out I don't really have a great list of which ones you need for any particular run. _I'm working on it..._
 
-Consider doing this with direnv (see Requirements section).
+Consider doing this with direnv (see Requirements section). First, `cp envrc .envrc`, then `direnv edit` to open the file in `$EDITOR`
+Fill in the values below, as appropriate. A description of what some of these are follows.
 ```
-export AWS_ACCESS_KEY_ID="<your key id>"
-export AWS_SECRET_ACCESS_KEY="<your secret access key>"
-export AWS_REGION=us-east-1
-export TILLER_SECRET_BUCKET="<your secret bucket>"
-export PACKER_ACCESS_KEY="${AWS_ACCESS_KEY_ID}"
-export PACKER_SECRET_KEY="${AWS_SECRET_ACCESS_KEY}"
-export PACKER_BUCKET_ACCESS_KEY="${AWS_ACCESS_KEY_ID}"
-export PACKER_BUCKET_SECRET_KEY="${AWS_SECRET_ACCESS_KEY}"
-export PACKER_REGION="${AWS_REGION}"
-export AWS_DEFAULT_REGION="${AWS_REGION}"
-export PACKER_VPC_ID="<your vpc>"
-export PACKER_SUBNET_ID="<your subnet>"
-export PACKER_SECRET_BUCKET="${TILLER_SECRET_BUCKET}"
+export AWS_ACCESS_KEY_ID=""
+export AWS_SECRET_ACCESS_KEY=""
+export AWS_DEFAULT_REGION=""
+
+export TILLER_access_key="${AWS_ACCESS_KEY_ID}"
+export TILLER_secret_key="${AWS_SECRET_ACCESS_KEY}"
+export TILLER_region="${AWS_DEFAULT_REGION}"
+export TILLER_azs=""
+export TILLER_key_name=""
+export TILLER_secret_bucket=""
+export TILLER_vpc_cidr=""
+export TILLER_vpc_id=""
+
+export PACKER_ACCESS_KEY=""
+export PACKER_SECRET_KEY=""
+export PACKER_BUCKET_ACCESS_KEY=""
+export PACKER_BUCKET_SECRET_KEY=""
+export PACKER_REGION="${AWS_DEFAULT_REGION}"
+export PACKER_VPC_ID=""
+export PACKER_SUBNET_ID=""
+export PACKER_SECRET_BUCKET=""
 export IAM_INSTANCE_PROFILE="AmazonECSContainerInstanceRole"
 ```
+- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_DEFAULT_REGION` are the standard credentials for the account in which `tiller` will build resources.
+- All of the `TILLER_` variables have corresponding variables in most of the current resources. You can add to this list - see `tiller.py describe` for a given resource to know which variables are required to be set. You can set them here, or with the `--var` flag from the command line.
+  - `key_name` - the name of a key-pair within AWS which will be applied to any instances created. Must already exist.
+  - `secret_bucket` - Where the tfstate file will be stored. Must be accessible by the user with the credentials provided
+  - `vpc_cidr` - the CIDR block to assign to the new VPC. If you don't provide this, a default value will be used.
+  - `vpc_id` - Once you've built `terraform/awsbase`, you can put set `vpc_id` here so all future resources will be installed into the right VPC
+- `PACKER_` variables are mostly geared toward the `packer/ba-base-ami` resource. 
+  - `VPC_ID` and `SUBET_ID` **do not** depend on `terraform/awsbase`. They are only used to tell Packer where it should spin up the provisioning AMI. You can use the default VPC provided with your AWS account for this.
+  - `SECRET_BUCKET` must contain `blueapron-validator.pem` for Chef
+  - The Role for `IAM_INSTANCE_PROFILE` must be a role which has the "AmazonEC2ContainerServiceforEC2Role" policy attached. This is standard policy [provided by AWS](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html). 
+
 
 ### See what resources are available:
 `tiller.py list`
@@ -137,12 +145,23 @@ For a variable named `varname`:
 - Any variables which are required but not otherwise set will prompt the user at runtime
   - _Note: this is only true for Terraform resources right now._
 
-## Limitations:
-I am not entirely sure that `destroy` works perfectly yet, but it does (apparently) work. 
+## Examples
 
+### AWSBase
+This provides the base AWS structure, for out environment to live
+```bash
+./tiller.py plan terraform/awsbase --var="ami=<latest_ba_ami>" --env dev
+```
+
+### Consul Cluster
+```bash
+./tiller.py build terraform/consul --var="private_subnet_ids=" --var="consul_shared_secret=" --var="ami=" --env dev
+```
 
 # Contributing
 Please use the `develop` branch for all contributions. All changes should be made in `feature/<feature_name>` or `hotfix/<hotfix_name>` branches. For those of you using [Phabricator](https://phabricator.blueapron.com) and `arcanist`, `arc diff` and `arc push` will automatically reference `origin/develop`. Otherwise, please create your pull requests on `develop` ___and not `master`___
+
+You can turn most terraform files into `tiller` resources with minimal effort. Simply copy the sample `config.tiller` file into your new resource's directory, make appropriate changes, and run them with `tiller.py`
 
 
 ## TODO (21)
