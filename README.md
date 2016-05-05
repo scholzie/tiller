@@ -142,8 +142,6 @@ For a variable named `varname`:
   - `TILLER_varname=value`
 - Command line:
   - `--var="varname=value"`
-- Any variables which are required but not otherwise set will prompt the user at runtime
-  - _Note: this is only true for Terraform resources right now._
 
 ## Examples
 
