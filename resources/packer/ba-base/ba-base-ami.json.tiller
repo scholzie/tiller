@@ -9,7 +9,7 @@
 		"secret_bucket"	: "{{env `PACKER_SECRET_BUCKET`}}",
         "iam_role"      : "{{env `IAM_INSTANCE_PROFILE`}}",
 		"aws_region"	: "{{env `PACKER_AWS_REGION`}}",
-		"source_ami"	: "ami-63ac5803"
+		"source_ami"	: "ami-2b594f41"
 	},
 	"builders": [{
         "type"							: "amazon-ebs",
