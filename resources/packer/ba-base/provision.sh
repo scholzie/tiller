@@ -68,6 +68,17 @@ popd
 echo "Installing awscli..." | teestamp
 sudo pip install awscli 2>&1 | teestamp
 
+echo "Writing client.rb..." | teestamp
+cat << EOF > /tmp/base-client.rb
+log_level        :info
+log_location     STDOUT
+chef_server_url  'https://api.chef.io/organizations/blueapron'
+validation_client_name 'blueapron-validator'
+validation_key  '/etc/chef/validation.pem'
+environment     'ecs-hosts'
+EOF
+sudo cp /tmp/base-client.rb /etc/chef/client.rb 2>&1 | teestamp
+
 echo "Retrieving chef credentials from ${PACKER_SECRET_BUCKET}..." | teestamp
 aws s3 cp s3://${PACKER_SECRET_BUCKET}/blueapron-validator.pem /tmp/blueapron-validator.pem 2>&1 | teestamp
 sudo cp /tmp/blueapron-validator.pem /etc/chef/validation.pem 2>&1 | teestamp

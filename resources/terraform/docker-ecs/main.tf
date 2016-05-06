@@ -13,7 +13,7 @@ resource "aws_ecs_cluster" "docker" {
 
 # ELB SG
 resource "aws_security_group" "elb-docker-sg" {
-  name        = "elb-${var.environment_name}-docker-ecs-sg"
+  name        = "elb-${var.environment_name}-${var.cluster_name}-ecs-sg"
   description = "ELB security for docker cluster"
   vpc_id      = "${var.vpc_id}"
 
@@ -44,7 +44,7 @@ resource "aws_security_group" "elb-docker-sg" {
 
 # EC2 SG
 resource "aws_security_group" "ec2-docker-sg" {
-  name        = "ec2-${var.environment_name}-docker-ecs-sg"
+  name        = "ec2-${var.environment_name}-${var.cluster_name}-ecs-sg"
   description = "EC2 security for docker cluster"
   vpc_id      = "${var.vpc_id}"
 
@@ -92,7 +92,7 @@ resource "aws_security_group" "ec2-docker-sg" {
 
 # ELB
 resource "aws_elb" "elb-docker-ecs" {
-  name = "elb-${var.environment_name}-docker-ecs"
+  name = "elb-${var.environment_name}-${var.cluster_name}-ecs"
 
   # Subnets will have been made during global config.
   # TODO: Figure out subnets automatically. Either use a module, or pre-fill from network output
@@ -129,7 +129,7 @@ resource "template_file" "script" {
 
 # Launch Config
 resource "aws_launch_configuration" "lc-docker" {
-  name                 = "lc-${var.environment_name}-docker-ecs"
+  name                 = "lc-${var.environment_name}-${var.cluster_name}-ecs"
   image_id             = "${var.ami}"
   instance_type        = "${var.instance_type}"
   iam_instance_profile = "${var.iam_instance_profile}"
@@ -146,7 +146,7 @@ resource "aws_launch_configuration" "lc-docker" {
 
 # ASG
 resource "aws_autoscaling_group" "docker-ecs" {
-  name                      = "asg-${var.environment_name}-docker-ecs"
+  name                      = "asg-${var.environment_name}-${var.cluster_name}-ecs"
   availability_zones        = ["${split(",", var.azs)}"]
   vpc_zone_identifier       = ["${split(",", var.subnets)}"]
   depends_on                = ["aws_launch_configuration.lc-docker"]
@@ -156,7 +156,7 @@ resource "aws_autoscaling_group" "docker-ecs" {
   desired_capacity          = "${var.desired_capacity}"
   health_check_type         = "EC2"
   health_check_grace_period = "${var.health_check_grace_period}"
-  load_balancers            = ["elb-${var.environment_name}-docker-ecs"]
+  load_balancers            = ["elb-${var.environment_name}-${var.cluster_name}-ecs"]
 
   depends_on = ["aws_elb.elb-docker-ecs"]
 
