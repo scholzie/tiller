@@ -27,7 +27,6 @@ class TillerResource(object):
         self.description = kwargs.get('description')
         self.long_description = kwargs.get('long_description')
         self.depends_on = kwargs.get('depends_on')
-
         if self.depends_on:
             self.depends_on = json.loads(self.depends_on)
         self.required_vars = kwargs.get('required_vars')
@@ -84,11 +83,14 @@ class TillerResource(object):
         for k in self.required_vars.keys():
             logging.debug("Checking for values for {}".format(k))
             if os.environ.get('TILLER_{}'.format(k)):
-                self.required_vars[k] = os.environ.get('TILLER_{}'.format(k)).strip('"').strip("'")
-                logging.debug("ENV $TILLER_{}: {}".format(k, os.environ.get('TILLER_{}'.format(k)).strip('"').strip("'")))
+                strval = os.environ.get('TILLER_{}'.format(
+                    k)).strip('"').strip("'")
+                self.required_vars[k] = strval
+                logging.debug("ENV $TILLER_{}: {}".format(k, strval))
             if kwargs.get(k):
-                self.required_vars[k] = kwargs.get(k).strip('"').strip("'")
-                logging.debug("--vars {}: {}".format(k, kwargs.get(k).strip('"').strip("'")))
+                strval = str(kwargs.get(k)).strip('"').strip("'")
+                self.required_vars[k] = strval
+                logging.debug("--vars {}: {}".format(k, strval))
 
     @classmethod
     def from_config(cls, config_file):

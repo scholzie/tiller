@@ -339,7 +339,7 @@ class TerraformResource(TillerResource):
             cmd = "terraform destroy".split()
             args = self._global_terraform_args
             args += ['-var', 'environment_name={}'.format(self.environment)]
-            if kwargs.get('force'):
+            if kwargs.get('force_destroy'):
                 args += ['-force']
             tl.run(cmd, args, self.path,
                    log_only = any([kwargs.get('verbose'), kwargs.get('debug')]))

@@ -41,6 +41,7 @@ from docopt import docopt
 import logging
 import os
 import textwrap
+import re
 
 name = 'tiller'
 version = '0.0.1'
@@ -164,7 +165,8 @@ def check_deps(resource, **kwargs):
             if dep_r.plan(output=False, **kwargs):
                 print "{} exists. Continuing.".format(dep)
             else:
-                print "{}::{} does not yet exist. Please build it first.".format(dep_r.environment, dep)
+                print("{}::{} does not yet exist. "
+                      "Please build it first.".format(dep_r.environment, dep))
                 deps_outstanding += 1
     except Exception as e:
         logging.error("Error while checking dependencies: {}".format(e))
@@ -199,6 +201,25 @@ def main(args):
     if args['--force']:
         runtime_vars['force'] = args['--force']
 
+    if any([args['plan'], args['build'], args['destroy'], args['show']]):
+        try:
+            userinfo = tl.get_account_info()
+            infostring = "Working within account {}, User: {}".format(
+                userinfo['arn'], userinfo['username'])
+            border = '=' * len(infostring)
+            print('\n{}\n{}\n{}'.format(border, infostring, border))
+            if not args['--force']:
+                warning = '!' * 5 + ' '
+                warning += "If this is not correct, "
+                warning += "press Ctrl-C to bail out now"
+                warning += ' ' + '!' * 5
+                border = '=' * len(warning)
+                print("{}\n{}\n{}".format(border, warning, border))
+                raw_input("Press Enter to continue.")
+        except KeyboardInterrupt as ki:
+            logging.debug(ki)
+            exit(1)
+
     if args['plan']:
         # TODO: Finish 'plan'
         print "Planning {}...".format(args['<resource>'])
@@ -211,7 +232,9 @@ def main(args):
             if deps == 0:
                 r.plan(**runtime_vars)
             else:
-                print ("There are {} dependencies outstanding. Will not continue planning of {}/{}. Please check output above for details.".format(deps, r.namespace, r.name))
+                print ("There are {} dependencies outstanding. Will not "
+                       "continue planning of {}/{}. Please check output above "
+                       "for details.".format(deps, r.namespace, r.name))
         except tl.TillerException as te:
             print te[1]
         except Exception as e:
@@ -228,7 +251,9 @@ def main(args):
             if deps == 0:
                 r.build(**runtime_vars)
             else:
-                print ("There are {} dependencies outstanding. Will not continue building {}/{}. Please check output above for details.".format(deps, r.namespace, r.name))
+                print ("There are {} dependencies outstanding. Will not "
+                       "continue building {}/{}. Please check output above "
+                       "for details.".format(deps, r.namespace, r.name))
         except tl.TillerException as te:
             print te[1]
         except Exception as e:
@@ -252,25 +277,39 @@ def main(args):
         logging.info("Describing {}".format(resname))
         try:
             describe(resname)
-        except KeyError as err:
+        except KeyError:
             msg = "No valid resource named {}".format(resname)
             logging.error("[Tiller:{}] {}".format(__name__, msg))
             raise tl.TillerException(msg)
 
     elif args['destroy']:
-        # TODO: Implement 'destroy'
-
         logging.info("Destroying {}".format(args['<resource>']))
         logging.debug("destroy_args: {}".format(runtime_vars))
         r = resource_by_name(args['<resource>'])
         r.environment = env if env else None
         try:
+            if not args['--force']:
+                yorn = raw_input("You are about to DESTROY {} in {}. "
+                                 "Are you sure? "
+                                 "[yes/NO]: ".format(r.name, r.environment))
+                while yorn in 'Y y'.split():
+                    yorn = raw_input("Please type 'yes' to continue: ")
+                if not re.match("[Yy][Ee][Ss]", yorn):
+                    print "Exiting..."
+                    exit()
+                else:
+                    runtime_vars['force_destroy'] = True
+            else:
+                runtime_vars['force_destroy'] = True
+
             r.destroy(**runtime_vars)
         except tl.TillerException as te:
             print te[1]
+        except KeyboardInterrupt as ki:
+            logging.debug(ki)
+            exit()
         except Exception as e:
             logging.error(e)
-
 
     elif args['list']:
         logging.info("Listing resources.")
@@ -279,17 +318,19 @@ def main(args):
         for r in resources.values():
             if r.depends_on:
                 print('\t{:<16}\t{} (depends on {})'.format(*['/'.join(
-                [r.namespace,r.name]), r.description, ', '.join(r.depends_on)]))
+                    [r.namespace, r.name]),
+                    r.description,
+                    ', '.join(r.depends_on)]))
             else:
-                print('\t{:<16}\t{}'.format(*['/'.join([r.namespace,r.name]), r.description]))
-
+                print('\t{:<16}\t{}'.format(*['/'.join([r.namespace, r.name]),
+                                            r.description]))
 
         print('\nFor more information see: ./tiller.py describe <resource>')
 
     elif args['stage']:
         logging.info("Staging for manual run.")
-        logging.info("REMINDER: This will leave things in a potentially unclean"
-                     " state. Recommended that you clean up afterwards.")
+        logging.info("NOTE: This will leave things in a potentially unclean "
+                     "state. Recommended that you clean up afterwards.")
         r = resource_by_name(args['<resource>'])
         r.environment = env if env else None
         try:
