@@ -6,7 +6,7 @@ import os
 
 
 class FakeSectionHeader(object):
-    """Return the contents of a .properties (key=value) style file in an ini 
+    """Return the contents of a .properties (key=value) style file in an ini
     format so that it can be used with ConfigParser"""
     def __init__(self, fp, fake_section="default"):
         super(FakeSectionHeader, self).__init__()
@@ -110,15 +110,6 @@ def get_var(varname, **kwargs):
 
 def get_account_info(access_key=None, secret_key=None):
     '''Get ARN and user-name for the current account. Return them as a dict.'''
-
-    # try:
-    #     if not access_key:
-    #         access_key = os.environ['AWS_ACCESS_KEY_ID']
-    #     if not secret_key:
-    #         secret_key = os.environ['AWS_SECRET_ACCESS_KEY']
-    # except KeyError as ke:
-    #     logging.error("Access or Secret Key missing, and not set "
-    #                   "in environment: {}".format(ke))
 
     try:
         if not any([access_key, secret_key]):
