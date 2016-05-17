@@ -1,0 +1,8 @@
+[resource]
+name = docker-ecs
+description = An ECS cluster pre-configured with Chef
+long_description = Create an ECS cluster using BA's custom Ubuntu-based AMI preconfigured with Chef and ready to run docker. Required vars: ami (the AMI to launch ECS EC2 instances with), cluster_name (The name to assign to the new ECS cluster)
+depends_on = ["terraform/awsbase"]
+required_vars = ["ami","azs","key_name","cluster_name","access_key","secret_key","region"]
+# state_key_ext = ""
+state_key_var = "cluster_name"

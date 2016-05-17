@@ -1,5 +1,8 @@
 #!/bin/bash
 
+mkdir /etc/blueapron
+echo "${ecs_cluster}" > /etc/blueapron/ecs-cluster
+
 cat <<CHEFCONFIG > /etc/chef/first-boot.json
 {
 	"ba-ecs-agent"	: {
