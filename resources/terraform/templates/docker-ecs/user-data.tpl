@@ -1,11 +1,11 @@
 #!/bin/bash
 
-mkdir /etc/blueapron
-echo "${ecs_cluster}" > /etc/blueapron/ecs-cluster
+mkdir /etc/devops
+echo "${ecs_cluster}" > /etc/devops/ecs-cluster
 
 cat <<CHEFCONFIG > /etc/chef/first-boot.json
 {
-	"ba-ecs-agent"	: {
+	"ecs-agent"	: {
 		"cluster": "${ecs_cluster}"
 	},
 	"run_list": [ "role[${ecs_host_role}]" ]

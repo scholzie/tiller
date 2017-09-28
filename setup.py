@@ -10,7 +10,7 @@ config = {
         'version':      '0.0.2',
         'description':  'Tiller. Sow your oats.',
         'author':       'Chris Scholz',
-        'author_email': 'devops@blueapron.com',
+        'author_email': 'scholzie@gmail.com',
         'install_requires': ['docopt, boto'],
         'packages':     ['tiller'],
         'scripts':      []

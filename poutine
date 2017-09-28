@@ -3,8 +3,8 @@
 #   This script is a wrapper for Terraform, ostensibly to manage tfstate, but
 #   mostly just to make your life more difficult.
 #
-# Maintainer: DevOps Kr3w <devops@blueapron.com>
-# Author: Chris Scholz <scholzie@blueapron.com> // Don't blame plz
+# Maintainer: Chris Scholz <scholzie@gmail.com
+# Author: Chris Scholz <scholzie@gmail.com.com> // Don't blame plz
 
 
 [[ $DEBUG ]] && set -x
@@ -137,9 +137,9 @@ pushd "${TF_DIR}/${ROLE}" > /dev/null
 # Remove any traces of local tfstate files. I think those are screwing up
 # cross-environment builds
 if [[ -f ".terraform/terraform.tfstate" ]]; then
-    echo "=== Moving .terraform/*.tfstate* to .terraform/ba-backup/ ==="
-    mkdir -p ./.terraform/ba-backup
-    mv .terraform/*.tfstate* .terraform/ba-backup/
+    echo "=== Moving .terraform/*.tfstate* to .terraform/tf-backup/ ==="
+    mkdir -p ./.terraform/tf-backup
+    mv .terraform/*.tfstate* .terraform/tf-backup/
 fi
 
 [[ $DEBUG ]] && export TF_LOG=$DEBUG
@@ -164,7 +164,7 @@ fi
 # remove all state files
 echo "=== Deleting local terraform.tfstate files ==="
 rm -rf .terraform/terraform.tfstate* 
-rm -rf .terraform/ba-backup
+rm -rf .terraform/tf-backup
 
 # GTFO
 popd > /dev/null

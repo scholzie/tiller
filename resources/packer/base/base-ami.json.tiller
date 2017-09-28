@@ -4,6 +4,8 @@
 		"aws_secret_key": "{{env `PACKER_SECRET_ACCESS_KEY`}}",
         "bucket_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
         "bucket_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
+        "chef_server_url": "https://api.chef.io/path/to/org",
+        "chef_valididation_client": "validator",
 		"vpc_id"		: "{{env `PACKER_VPC_ID`}}",
 		"subnet_id"		: "{{env `PACKER_SUBNET_ID`}}",
 		"secret_bucket"	: "{{env `PACKER_SECRET_BUCKET`}}",
@@ -20,7 +22,7 @@
 	    "source_ami"					: "{{user `source_ami`}}",
 	    "instance_type"					: "m3.medium",
 	    "ssh_username"					: "ubuntu",
-	    "ami_name"						: "ba-base_ubuntu14.04_{{timestamp}}",
+	    "ami_name"						: "base_ubuntu14.04_{{timestamp}}",
         "vpc_id"                        : "{{user `vpc_id`}}",
         "subnet_id"                     : "{{user `subnet_id`}}",
         "iam_instance_profile"          : "{{user `iam_role`}}"
@@ -38,10 +40,10 @@
 		},
   		{
 		    "type"					: "chef-client",
-		    "server_url"			: "https://api.chef.io/organizations/blueapron",
-		    "validation_client_name": "blueapron-validator",
+		    "server_url"			: "{{user `chef_server_url`}}",
+		    "validation_client_name": "{{user `chef_validation_client`}}",
             "run_list"              : ["role[ec2_docker_host]"],
-            "chef_environment"      : "ba-packer-base"
+            "chef_environment"      : "packer-base"
 		}
 	]
 }

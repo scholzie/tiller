@@ -1,0 +1,3 @@
+[resource]
+name = base-ami
+description = "Core base AMI"

@@ -63,10 +63,6 @@ Because it probably won't work the first time.
 
 # Use
 Clone the `tiller` repo and checkout `develop`:
-```
-$ git clone git@github.com:blueapron/tiller.git
-$ git checkout develop
-```
 You also need `docopt` until I package everything up properly:
 `$ pip install docopt`
 
@@ -111,9 +107,9 @@ export IAM_INSTANCE_PROFILE="AmazonECSContainerInstanceRole"
   - `secret_bucket` - Where the tfstate file will be stored. Must be accessible by the user with the credentials provided
   - `vpc_cidr` - the CIDR block to assign to the new VPC. If you don't provide this, a default value will be used.
   - `vpc_id` - Once you've built `terraform/awsbase`, you can put set `vpc_id` here so all future resources will be installed into the right VPC
-- `PACKER_` variables are mostly geared toward the `packer/ba-base-ami` resource. 
+- `PACKER_` variables are mostly geared toward the `packer/base-ami` resource. 
   - `VPC_ID` and `SUBET_ID` **do not** depend on `terraform/awsbase`. They are only used to tell Packer where it should spin up the provisioning AMI. You can use the default VPC provided with your AWS account for this.
-  - `SECRET_BUCKET` must contain `blueapron-validator.pem` for Chef
+  - `SECRET_BUCKET` must contain your `validator.pem` for Chef
   - The Role for `IAM_INSTANCE_PROFILE` must be a role which has the "AmazonEC2ContainerServiceforEC2Role" policy attached. This is standard policy [provided by AWS](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html). 
 
 
@@ -157,7 +153,7 @@ This provides the base AWS structure, for our environment to live
 ```
 
 # Contributing
-Please use the `develop` branch for all contributions. All changes should be made in `feature/<feature_name>` or `hotfix/<hotfix_name>` branches. For those of you using [Phabricator](https://phabricator.blueapron.com) and `arcanist`, `arc diff` and `arc push` will automatically reference `origin/develop`. Otherwise, please create your pull requests on `develop` ___and not `master`___
+Please use the `develop` branch for all contributions. All changes should be made in `feature/<feature_name>` or `hotfix/<hotfix_name>` branches. For those of you using [Phabricator](https://www.phacility.com/phabricator) and `arcanist`, `arc diff` and `arc push` will automatically reference `origin/develop`. Otherwise, please create your pull requests on `develop` ___and not `master`___
 
 You can turn most terraform files into `tiller` resources with minimal effort. Simply copy the sample `config.tiller` file into your new resource's directory, make appropriate changes, and run them with `tiller.py`
 

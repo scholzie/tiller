@@ -4,6 +4,8 @@
 set -e
 [[ $DEBUG_PROVISION_SCRIPT ]] && set -x
 
+CHEF_SERVER=${CHEF_SERVER:-https://api.chef.io}
+CHEF_VALIDATOR_CLIENT=${CHEF_VALIDATOR_CLIENT:-validator}
 LOGPATH=/tmp/provision.$(date +%s).log
 
 function help {
@@ -73,16 +75,16 @@ echo "Writing client.rb..." | teestamp
 cat << EOF > /tmp/base-client.rb
 log_level        :info
 log_location     STDOUT
-chef_server_url  'https://api.chef.io/organizations/blueapron'
-validation_client_name 'blueapron-validator'
+chef_server_url  '${CHEF_SERVER}'
+validation_client_name '${CHEF_VALIDATOR_CLIENT}'
 validation_key  '/etc/chef/validation.pem'
 environment     'base'
 EOF
 sudo cp /tmp/base-client.rb /etc/chef/client.rb 2>&1 | teestamp
 
 echo "Retrieving chef credentials from ${PACKER_SECRET_BUCKET}..." | teestamp
-aws s3 cp s3://${PACKER_SECRET_BUCKET}/blueapron-validator.pem /tmp/blueapron-validator.pem 2>&1 | teestamp
-sudo cp /tmp/blueapron-validator.pem /etc/chef/validation.pem 2>&1 | teestamp
+aws s3 cp s3://${PACKER_SECRET_BUCKET}/validator.pem /tmp/validator.pem 2>&1 | teestamp
+sudo cp /tmp/validator.pem /etc/chef/validation.pem 2>&1 | teestamp
 
 echo "=== Finished ===" | teestamp
 sudo mv "$LOGPATH" /root/
